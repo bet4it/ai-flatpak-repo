@@ -70,7 +70,7 @@ modules:
         fi
         
         install -D io.github.id_root.Synapse.desktop /app/share/applications/io.github.id_root.Synapse.desktop
-        install -D io.github.id_root.Synapse.metainfo.xml /app/share/metainfo/io.github.id_root.Synapse.metainfo.xml
+        install -D io.github.id_root.Synapse.appdata.xml /app/share/metainfo/io.github.id_root.Synapse.appdata.xml
         install -D icon.png /app/share/synapse/io.github.id_root.Synapse.png
     sources:
       - type: git
@@ -79,6 +79,6 @@ modules:
       - type: file
         path: io.github.id_root.Synapse.desktop
       - type: file
-        path: io.github.id_root.Synapse.metainfo.xml
+        path: io.github.id_root.Synapse.appdata.xml
       - type: file
         path: icon.png

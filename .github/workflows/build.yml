@@ -32,7 +32,6 @@ jobs:
       matrix:
         app: ${{ fromJson(needs.discover.outputs.matrix) }}
     container:
-      # Upgraded to latest stable infrastructure image
       image: ghcr.io/flathub-infra/flatpak-github-actions:freedesktop-25.08
       options: --privileged
     steps:
@@ -58,15 +57,28 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           merge-multiple: true
+
       - name: Reconstruct Repository
         run: |
-          sudo apt-get update && sudo apt-get install -y flatpak ostree rsync
+          sudo apt-get update && sudo apt-get install -y flatpak ostree rsync appstream
           rm -rf repo
           mkdir -p repo
           ostree init --repo=repo --mode=archive-z2
           touch repo/.nojekyll
+          
+          # Import bundles
           find . -name "*.flatpak" -print0 | xargs -0 -I {} sh -c 'echo "Importing {}..."; flatpak build-import-bundle repo "{}"'
+          
+          # CRITICAL: Generate AppStream metadata index
+          # This is what makes "Version" appear in flatpak remote-ls
+          mkdir -p appstream-tmp
+          # Extract metadata from the repo to generate the AppStream branch
+          # We use the built-in flatpak build-update-repo which should pick up the metainfo from the objects
           flatpak build-update-repo --generate-static-deltas repo
+          
+          # Verification: Check if AppStream data exists in the summary
+          # Standard Flathub repos have an 'appstream' branch
+          ostree --repo=repo refs
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v4
         with:
