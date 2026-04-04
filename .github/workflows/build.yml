@@ -41,7 +41,6 @@ jobs:
         with:
           bundle: ${{ matrix.app }}.flatpak
           manifest-path: ${{ matrix.app }}/${{ matrix.app }}.yaml
-          # Do NOT set repository-name here to avoid dependency resolution errors
           branch: stable
           cache: true
           cache-key: flatpak-builder-${{ matrix.app }}-${{ github.sha }}
@@ -63,10 +62,13 @@ jobs:
       - name: Reconstruct Repository
         run: |
           sudo apt-get update && sudo apt-get install -y flatpak ostree rsync
+          rm -rf repo
           mkdir -p repo
-          flatpak build-update-repo --init repo
+          # Use low-level ostree init for maximum compatibility with older flatpak versions
+          ostree init --repo=repo --mode=archive-z2
           touch repo/.nojekyll
           find bundles/ -name "*.flatpak" -print0 | xargs -0 -I {} sh -c 'echo "Importing {}..."; flatpak build-import-bundle repo "{}"'
+          # Use build-update-repo without --init
           flatpak build-update-repo --no-gpg-verify --generate-static-deltas repo
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v4
