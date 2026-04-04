@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Spacecake
+Exec=spacecake
+Terminal=false
+Type=Application
+Icon=io.github.spacecake_labs.spacecake
+Categories=Development;
+Comment=AI-powered Code Editor

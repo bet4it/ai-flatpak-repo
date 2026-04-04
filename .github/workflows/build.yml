@@ -1,0 +1,81 @@
+name: Build and Deploy Flatpak Repo
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  discover:
+    name: Discover Apps
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v6
+      - id: set-matrix
+        run: |
+          DIRS=$(find . -maxdepth 2 -not -path '*/.*' -name "*.yaml" | xargs -I {} dirname {} | sed 's|^\./||' | sort -u | jq -R . | jq -s -c .)
+          echo "matrix=$DIRS" >> $GITHUB_OUTPUT
+
+  build:
+    name: Build Flatpak
+    needs: discover
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app: ${{ fromJson(needs.discover.outputs.matrix) }}
+    container:
+      image: ghcr.io/flathub-infra/flatpak-github-actions:freedesktop-24.08
+      options: --privileged
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Build App
+        uses: flatpak/flatpak-github-actions/flatpak-builder@v6
+        with:
+          bundle: ${{ matrix.app }}.flatpak
+          manifest-path: ${{ matrix.app }}/${{ matrix.app }}.yaml
+          repository-name: flathub
+          repository-url: https://flathub.org/repo/flathub.flatpakrepo
+          branch: master
+          cache: true
+          cache-key: flatpak-builder-${{ matrix.app }}-${{ github.sha }}
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Download All Bundles
+        uses: actions/download-artifact@v4
+        with:
+          path: bundles
+          pattern: "*-flatpak"
+          merge-multiple: true
+
+      - name: Reconstruct Repository
+        run: |
+          sudo apt-get update && sudo apt-get install -y flatpak ostree rsync
+          mkdir -p repo
+          ostree init --repo=repo --mode=archive
+          find bundles/ -name "*.flatpak" -print0 | xargs -0 -I {} sh -c 'echo "Importing {}..."; flatpak build-import-bundle repo "{}"'
+          flatpak build-update-repo repo
+
+      - name: Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./repo
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

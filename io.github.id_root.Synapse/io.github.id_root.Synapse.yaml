@@ -1,0 +1,84 @@
+app-id: io.github.id_root.Synapse
+runtime: org.gnome.Platform
+runtime-version: '47'
+sdk: org.gnome.Sdk
+command: synapse
+separate-locales: false
+finish-args:
+  - --share=ipc
+  - --socket=x11
+  - --socket=wayland
+  - --device=dri
+  - --share=network
+  - --filesystem=home
+  - --talk-name=org.freedesktop.Notifications
+
+modules:
+  - name: node
+    buildsystem: simple
+    build-commands:
+      - cp -r * /app/
+      - mkdir -p /app/etc/node-headers
+      - tar -xf node-v22.13.1-headers.tar.gz -C /app/etc/node-headers --strip-components=1 --no-same-owner
+    sources:
+      - type: archive
+        url: https://nodejs.org/dist/v22.13.1/node-v22.13.1-linux-x64.tar.xz
+        sha256: 0d2a5af33c7deab5555c8309cd3f373446fe1526c1b95833935ab3f019733b3b
+      - type: file
+        url: https://nodejs.org/dist/v22.13.1/node-v22.13.1-headers.tar.gz
+        sha256: f9cde9ace585c3979f1b4ee247914f35fae6e7b7eabc6a40961f89ad39e78964
+
+  - name: go
+    buildsystem: simple
+    build-commands:
+      - mkdir -p /app/go
+      - cp -r . /app/go/
+      - if [ -d "/app/go/go" ]; then mv /app/go/go/* /app/go/ && rm -rf /app/go/go; fi
+      - mkdir -p /app/bin
+      - ln -s /app/go/bin/go /app/bin/go
+    sources:
+      - type: archive
+        url: https://go.dev/dl/go1.24.1.linux-amd64.tar.gz
+        sha256: cb2396bae64183cdccf81a9a6df0aea3bce9511fc21469fb89a0c00470088073
+
+  - name: synapse
+    buildsystem: simple
+    build-options:
+      append-path: /app/bin:/app/go/bin
+      build-args:
+        - --share=network
+    build-commands:
+      - |
+        set -e
+        export GOROOT=/app/go
+        export GOPROXY=https://proxy.golang.org,direct
+        export GOSUMDB=sum.golang.org
+        export GO111MODULE=on
+        export GOPATH=/tmp/go
+        export PATH=$PATH:/app/bin:$GOROOT/bin:$GOPATH/bin
+        export TAR_OPTIONS="--no-same-owner"
+        export npm_config_nodedir=/app/etc/node-headers
+        
+        go install github.com/wailsapp/wails/v2/cmd/wails@latest
+        go mod tidy
+        wails build -tags webkit2_41 -platform linux/amd64 -o synapse
+        
+        if [ -f "build/bin/synapse" ]; then
+          install -D build/bin/synapse /app/bin/synapse
+        else
+          install -D synapse /app/bin/synapse
+        fi
+        
+        install -D io.github.id_root.Synapse.desktop /app/share/applications/io.github.id_root.Synapse.desktop
+        install -D io.github.id_root.Synapse.metainfo.xml /app/share/metainfo/io.github.id_root.Synapse.metainfo.xml
+        install -D icon.png /app/share/synapse/io.github.id_root.Synapse.png
+    sources:
+      - type: git
+        url: https://github.com/id-root/Synapse.git
+        branch: main
+      - type: file
+        path: io.github.id_root.Synapse.desktop
+      - type: file
+        path: io.github.id_root.Synapse.metainfo.xml
+      - type: file
+        path: icon.png

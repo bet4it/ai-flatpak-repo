@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.id_root.Synapse</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+  <name>Synapse</name>
+  <summary>Peer-to-peer file transfer system for Local Area Networks</summary>
+  <description>
+    <p>Synapse is a high-performance, peer-to-peer file transfer system designed for Local Area Networks. It combines a premium desktop interface built with React and Wails v2 into a single native binary, enabling seamless cross-platform deployment.</p>
+  </description>
+  <launchable type="desktop-id">io.github.id_root.Synapse.desktop</launchable>
+  <url type="homepage">https://github.com/id-root/Synapse</url>
+  <content_rating type="oars-1.1" />
+</component>

@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Synapse
+Comment=Peer-to-peer file transfer
+Exec=synapse
+Icon=/app/share/synapse/io.github.id_root.Synapse.png
+Terminal=false
+Type=Application
+Categories=Network;FileTransfer;
+Keywords=P2P;Transfer;LAN;
+StartupWMClass=Synapse
