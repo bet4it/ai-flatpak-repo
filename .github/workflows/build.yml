@@ -36,15 +36,13 @@ jobs:
       options: --privileged
     steps:
       - uses: actions/checkout@v6
-
       - name: Build App
         uses: flatpak/flatpak-github-actions/flatpak-builder@v6
         with:
           bundle: ${{ matrix.app }}.flatpak
           manifest-path: ${{ matrix.app }}/${{ matrix.app }}.yaml
-          repository-name: flathub
-          repository-url: https://flathub.org/repo/flathub.flatpakrepo
-          branch: master
+          repository-name: local-repo
+          branch: stable
           cache: true
           cache-key: flatpak-builder-${{ matrix.app }}-${{ github.sha }}
 
@@ -62,28 +60,28 @@ jobs:
           path: bundles
           pattern: "*-flatpak"
           merge-multiple: true
-
       - name: Reconstruct Repository
         run: |
-          sudo apt-get update && sudo apt-get install -y flatpak ostree rsync
-          rm -rf repo
+          sudo apt-get update && sudo apt-get install -y flatpak ostree
           mkdir -p repo
-          # Use archive-z2 for better web hosting compatibility
-          ostree init --repo=repo --mode=archive-z2
-          
-          # Prevent GitHub Pages from ignoring underscore folders
+          # Use build-update-repo to create a fresh repo
+          flatpak build-update-repo --init repo
           touch repo/.nojekyll
           
+          # Import each bundle. The key is to ensure they are imported as the correct App ID
           find bundles/ -name "*.flatpak" -print0 | xargs -0 -I {} sh -c 'echo "Importing {}..."; flatpak build-import-bundle repo "{}"'
           
-          # Generate a robust summary and static deltas
-          flatpak build-update-repo --generate-static-deltas repo
-
+          # CRITICAL: Generate the summary and make sure it is not empty
+          # We use --generate-static-deltas to make it browser-friendly
+          flatpak build-update-repo --no-gpg-verify --generate-static-deltas repo
+          
+          # Verification step inside CI: Check if summary is actually created
+          if [ ! -f "repo/summary" ]; then echo "Error: summary file missing!"; exit 1; fi
+          ls -lh repo/
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v4
         with:
           path: ./repo
-
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
