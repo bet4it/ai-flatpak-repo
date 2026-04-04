@@ -1,8 +1,8 @@
 # Packaging Wails Applications
 
 ## Build Requirements
-- **Go**: 1.21+ (preferably v1.24+).
-- **Node.js**: 18+ (preferably v22+).
+- **Go**: v1.24+.
+- **Node.js**: v22+ LTS.
 - **Libraries**: `webkit2gtk-4.1` and `gtk3`. Use **GNOME SDK**.
 
 ## Installation Logic
@@ -33,5 +33,5 @@ Unpack Go directly into `/app` to ensure the standard library is discoverable at
         export PATH=$PATH:/app/bin:$GOROOT/bin:$GOPATH/bin
         
         go mod tidy
-        wails build -tags webkit2_41 -platform linux/amd64 -o myapp
+        wails build -tags webkit2_41 -platform linux/amd64 -o synapse
 ```
