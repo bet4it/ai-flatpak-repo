@@ -68,9 +68,16 @@ jobs:
           sudo apt-get update && sudo apt-get install -y flatpak ostree rsync
           rm -rf repo
           mkdir -p repo
-          ostree init --repo=repo --mode=archive
+          # Use archive-z2 for better web hosting compatibility
+          ostree init --repo=repo --mode=archive-z2
+          
+          # Prevent GitHub Pages from ignoring underscore folders
+          touch repo/.nojekyll
+          
           find bundles/ -name "*.flatpak" -print0 | xargs -0 -I {} sh -c 'echo "Importing {}..."; flatpak build-import-bundle repo "{}"'
-          flatpak build-update-repo repo
+          
+          # Generate a robust summary and static deltas
+          flatpak build-update-repo --generate-static-deltas repo
 
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v4
