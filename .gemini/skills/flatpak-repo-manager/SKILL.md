@@ -12,6 +12,17 @@ Always check for the latest stable, non-EOL runtimes before creating a manifest.
   - `org.freedesktop.Platform` branch: `25.08`
 - **Rule**: If a runtime branch is EOL, upgrade immediately to the latest available numeric branch.
 
+## Version & Source Control (MANDATORY)
+Every application MUST have a version displayed in the repository.
+1. **Find Latest Version**: Use `gh release view --repo <URL>` or `git ls-remote --tags <URL>` to find the latest stable tag/release.
+2. **Lock Source**: In the manifest (`.yaml`), use the exact `tag` or `commit` hash. Do NOT use `branch: main` for stable releases.
+3. **AppStream Release Tag**: You MUST add a `<releases>` section to the `AppID.metainfo.xml` file. This is what Flatpak uses to populate the "Version" column.
+   ```xml
+   <releases>
+     <release version="1.2.3" date="2024-04-04" />
+   </releases>
+   ```
+
 ## Naming Conventions
 Follow the Reverse Domain Name Notation (RDNN).
 - **GitHub Projects**: Use `io.github.<username>.<ProjectName>`. Replace hyphens in the username or project name with underscores.

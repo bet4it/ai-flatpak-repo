@@ -10,5 +10,8 @@
   </description>
   <launchable type="desktop-id">io.github.spacecake_labs.spacecake.desktop</launchable>
   <url type="homepage">https://github.com/spacecake-labs/spacecake</url>
+  <releases>
+    <release version="0.1.0-alpha.68" date="2026-04-01" />
+  </releases>
   <content_rating type="oars-1.1" />
 </component>

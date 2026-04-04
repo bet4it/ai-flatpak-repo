@@ -75,7 +75,7 @@ modules:
     sources:
       - type: git
         url: https://github.com/id-root/Synapse.git
-        branch: main
+        tag: v1.0
       - type: file
         path: io.github.id_root.Synapse.desktop
       - type: file
