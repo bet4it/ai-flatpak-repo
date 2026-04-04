@@ -60,25 +60,21 @@ jobs:
 
       - name: Reconstruct Repository
         run: |
-          sudo apt-get update && sudo apt-get install -y flatpak ostree rsync appstream
+          sudo apt-get update && sudo apt-get install -y flatpak ostree rsync
           rm -rf repo
           mkdir -p repo
           ostree init --repo=repo --mode=archive-z2
           touch repo/.nojekyll
           
-          # Import bundles
+          # 1. Import all bundles
           find . -name "*.flatpak" -print0 | xargs -0 -I {} sh -c 'echo "Importing {}..."; flatpak build-import-bundle repo "{}"'
           
-          # CRITICAL: Generate AppStream metadata index
-          # This is what makes "Version" appear in flatpak remote-ls
-          mkdir -p appstream-tmp
-          # Extract metadata from the repo to generate the AppStream branch
-          # We use the built-in flatpak build-update-repo which should pick up the metainfo from the objects
-          flatpak build-update-repo --generate-static-deltas repo
+          # 2. CRITICAL: Generate AppStream metadata index
+          # The --update-appstream flag is MANDATORY for Version to show in remote-ls
+          flatpak build-update-repo --update-appstream --generate-static-deltas repo
           
-          # Verification: Check if AppStream data exists in the summary
-          # Standard Flathub repos have an 'appstream' branch
-          ostree --repo=repo refs
+          # Verification
+          ostree --repo=repo summary
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v4
         with:
