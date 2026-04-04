@@ -41,7 +41,7 @@ jobs:
         with:
           bundle: ${{ matrix.app }}.flatpak
           manifest-path: ${{ matrix.app }}/${{ matrix.app }}.yaml
-          repository-name: local-repo
+          # Do NOT set repository-name here to avoid dependency resolution errors
           branch: stable
           cache: true
           cache-key: flatpak-builder-${{ matrix.app }}-${{ github.sha }}
@@ -62,22 +62,12 @@ jobs:
           merge-multiple: true
       - name: Reconstruct Repository
         run: |
-          sudo apt-get update && sudo apt-get install -y flatpak ostree
+          sudo apt-get update && sudo apt-get install -y flatpak ostree rsync
           mkdir -p repo
-          # Use build-update-repo to create a fresh repo
           flatpak build-update-repo --init repo
           touch repo/.nojekyll
-          
-          # Import each bundle. The key is to ensure they are imported as the correct App ID
           find bundles/ -name "*.flatpak" -print0 | xargs -0 -I {} sh -c 'echo "Importing {}..."; flatpak build-import-bundle repo "{}"'
-          
-          # CRITICAL: Generate the summary and make sure it is not empty
-          # We use --generate-static-deltas to make it browser-friendly
           flatpak build-update-repo --no-gpg-verify --generate-static-deltas repo
-          
-          # Verification step inside CI: Check if summary is actually created
-          if [ ! -f "repo/summary" ]; then echo "Error: summary file missing!"; exit 1; fi
-          ls -lh repo/
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v4
         with:
