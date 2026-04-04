@@ -42,17 +42,8 @@ jobs:
           bundle: ${{ matrix.app }}.flatpak
           manifest-path: ${{ matrix.app }}/${{ matrix.app }}.yaml
           branch: stable
-          # Export to a local repo folder within the job
-          repository-name: local-repo
-          repository-url: https://flathub.org/repo/flathub.flatpakrepo
           cache: true
           cache-key: flatpak-builder-${{ matrix.app }}-${{ github.sha }}
-
-      - name: Upload Repo Segment
-        uses: actions/upload-artifact@v4
-        with:
-          name: repo-${{ matrix.app }}
-          path: repo/
 
   deploy:
     name: Deploy to GitHub Pages
@@ -62,20 +53,27 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Download All Repo Segments
+      - name: Download All Bundles
         uses: actions/download-artifact@v4
         with:
-          pattern: repo-*
           merge-multiple: true
-          path: repo
 
-      - name: Finalize Repository
+      - name: Reconstruct Repository
         run: |
-          sudo apt-get update && sudo apt-get install -y flatpak
+          sudo apt-get update && sudo apt-get install -y flatpak ostree rsync
+          rm -rf repo
+          mkdir -p repo
+          ostree init --repo=repo --mode=archive-z2
           touch repo/.nojekyll
-          # This will merge everything and generate the final summary with metadata
+          
+          # 1. Import all bundles
+          find . -name "*.flatpak" -print0 | xargs -0 -I {} sh -c 'echo "Importing {}..."; flatpak build-import-bundle repo "{}"'
+          
+          # 2. Update summary
           flatpak build-update-repo --generate-static-deltas repo
           
+          # Verification: We will see the refs in the summary
+          ostree --repo=repo summary
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v4
         with:
