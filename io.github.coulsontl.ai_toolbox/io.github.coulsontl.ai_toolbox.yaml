@@ -51,6 +51,10 @@ modules:
         sha256: c09c5c085b2a0e391b8ee7d783a1d63fe444e96717cc1814d61b5e8fc2827a7c
 
   - name: libdbusmenu
+    build-options:
+      env:
+        HAVE_VALGRIND_FALSE: "#"
+        HAVE_VALGRIND_TRUE: ""
     config-opts:
       - --disable-static
       - --disable-gtk-doc
