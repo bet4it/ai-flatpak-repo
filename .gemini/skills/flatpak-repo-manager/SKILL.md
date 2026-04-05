@@ -16,12 +16,6 @@ Always check for the latest stable, non-EOL runtimes before creating or updating
    - Use `.metainfo.xml` suffix.
    - The `<id>` inside MUST match the `app-id`.
    - MUST include a `<releases>` section for version visibility.
-   ```xml
-   <releases>
-     <release version="1.2.3" date="2026-04-04" />
-   </releases>
-   ```
-4. **Metadata Placement**: Install to `/app/share/metainfo/AppID.metainfo.xml`.
 
 ## 3. Naming Conventions (RDNN)
 - **GitHub Projects**: `io.github.<username>.<ProjectName>`.
@@ -31,18 +25,15 @@ Always check for the latest stable, non-EOL runtimes before creating or updating
 1. **Source Analysis & Research (PRIORITY)**:
    - Clone target repo to **parent directory** (sibling to `ai-flatpak-repo`).
    - Identify stack (Electron, Tauri, etc.) and dependencies.
-   - **Flathub Research**: Search [github.com/flathub](https://github.com/flathub) for similar apps to see how they handle specific libraries or build complexities.
+   - **Flathub Research**: Search [github.com/flathub](https://github.com/flathub) for similar apps.
+   - **Shared Modules**: For common dependencies (e.g., `libappindicator`), **ALWAYS** check if they exist in `flathub/shared-modules`. Use the `shared-modules` git submodule.
 2. **Setup**: Create folder named after App ID. Add `.yaml`, `.metainfo.xml`, `.desktop`, and `icon.png`.
 3. **Commit & Push**: Push changes to repository.
 4. **Monitor & Verify (MANDATORY)**:
    - Use **strictly non-interactive** polling.
    - `sleep 10` after push, get Run ID via `gh run list --limit 1 --json databaseId`.
    - Poll status via `gh run view <ID> --json status,conclusion`.
-   - **Verification & Run (CRITICAL)**:
-     - Once build is successful, run `flatpak update --user --appstream <repo-name>`.
-     - **Install and Run**: `flatpak install <repo-name> <AppID>` and `flatpak run <AppID>`.
-     - **DEBUG**: If the app fails to launch (e.g., missing `.so`), research solutions on Flathub and update the manifest.
-     - **Completion**: Task is ONLY finished when the app launches successfully and UI is visible.
+   - **Verification & Run (CRITICAL)**: Install and run the app. Task is ONLY finished when UI is visible.
 5. **Knowledge Capture (CRITICAL)**:
    - Extract "gotchas" and update `references/` or `SKILL.md`. Every lesson learned from Flathub MUST be documented.
 
@@ -52,4 +43,5 @@ Always check for the latest stable, non-EOL runtimes before creating or updating
 - **Tauri (Rust + Node.js)**: See [references/tauri.md](references/tauri.md).
 
 ## 6. Deployment Standard
-Always use `ostree init --repo=repo --mode=archive-z2` and `flatpak build-update-repo` in modern containers.
+- **Submodules**: Use `git submodule add https://github.com/flathub/shared-modules.git` to manage common library definitions. Reference them in manifests as `../shared-modules/path/to/module.json`.
+- **CI/CD**: Ensure the workflow clones submodules (use `submodules: true` in checkout).
