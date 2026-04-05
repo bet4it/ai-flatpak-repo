@@ -52,6 +52,7 @@ modules:
 
   - name: libdbusmenu
     build-options:
+      cflags: -Wno-error
       env:
         HAVE_VALGRIND_FALSE: "#"
         HAVE_VALGRIND_TRUE: ""
