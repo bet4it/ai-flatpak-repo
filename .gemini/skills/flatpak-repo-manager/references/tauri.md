@@ -32,7 +32,19 @@ build-commands:
 
 ## Key "Gotchas" & Solutions
 
-### 1. Bypassing tauri-cli Bundling
+### 1. Library Loading at Runtime (CRITICAL)
+Even if libraries (like `libappindicator`) are built into `/app/lib`, the application might fail to find them. You MUST:
+1. Add `LD_LIBRARY_PATH` to `finish-args`:
+   ```yaml
+   finish-args:
+     - --env=LD_LIBRARY_PATH=/app/lib
+   ```
+2. (Optional) Provide compatibility symlinks if the app expects a specific name (e.g., Ayatana vs Classic):
+   ```bash
+   ln -s libappindicator3.so.1 /app/lib/libayatana-appindicator3.so.1
+   ```
+
+### 2. Bypassing tauri-cli Bundling
 `pnpm tauri build` tries to create `.deb`/`.appimage` packages which fail in the sandbox. Use `cargo build --release` directly after `pnpm build`.
 
 ### 2. Locating the Binary
