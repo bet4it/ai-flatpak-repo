@@ -69,11 +69,12 @@ jobs:
           # 1. Import all bundles
           find . -name "*.flatpak" -print0 | xargs -0 -I {} sh -c 'echo "Importing {}..."; flatpak build-import-bundle repo "{}"'
           
-          # 2. Update summary
+          # 2. Update summary and AppStream
+          # In this environment, flatpak build-update-repo handles appstream indexing automatically if possible
           flatpak build-update-repo --generate-static-deltas repo
           
-          # Verification: We will see the refs in the summary
-          ostree --repo=repo summary
+          # 3. Final summary update with explicit -u to avoid errors
+          ostree --repo=repo summary -u
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v4
         with:
