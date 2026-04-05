@@ -47,15 +47,15 @@ modules:
       - --disable-doxygen
       - --disable-gtk
 
-  - name: libayatana-appindicator
-    config-opts:
-      - -Dflathub=true
-      - -Dauto_features=disabled
-      - -Dgtk3=enabled
+  - name: libappindicator
     sources:
-      - type: git
-        url: https://github.com/AyatanaIndicators/libayatana-appindicator.git
-        tag: 0.5.93
+      - type: archive
+        url: https://launchpad.net/libappindicator/12.10/12.10.0/+download/libappindicator3-12.10.0.tar.gz
+        sha256: 91edc1cae442549f11ca4a71083bf3b3f212497f08e8adca35dbd6ee11caeead
+    build-options:
+      cflags: -Wno-error
+    config-opts:
+      - --with-gtk=3
 
   - name: ai-toolbox
     buildsystem: simple
@@ -65,9 +65,9 @@ modules:
       # Frontend build
       - pnpm install --frozen-lockfile
       - pnpm build
-      # Rust/Tauri build (No cd, keep context clear)
+      # Rust/Tauri build
       - cargo build --manifest-path tauri/Cargo.toml --release
-      # Installation (Auto-locate binary to avoid path issues)
+      # Installation
       - BIN_PATH=$(find . -name ai-toolbox -type f -executable | grep release | head -n 1);
         install -Dm755 "$BIN_PATH" /app/bin/ai-toolbox
       - install -Dm644 io.github.coulsontl.ai_toolbox.desktop -t /app/share/applications/
