@@ -43,6 +43,11 @@ Follow the Reverse Domain Name Notation (RDNN).
    - Use `sleep 300` (5 minutes) between checks for long-running builds.
    - **Success Condition**: The `status` must be `completed` and `conclusion` must be `success`. Do NOT consider the task finished until the remote build and deployment are verified.
 
+7. **Knowledge Capture (CRITICAL)**:
+   - After a successful (or even a difficult failed) build, extract technical "gotchas" and solutions.
+   - Update the "Technology-Specific Guides" or add a "Troubleshooting" section in `SKILL.md` to prevent future regressions.
+   - Document architecture-specific patterns (e.g., Tauri, Flutter, Go).
+
 ## Core Workflow (Multi-Job Architecture)
 To ensure robust AppStream metadata indexing, always use the 4-job architecture:
 1. **discover**: Find all manifests.
@@ -53,6 +58,7 @@ To ensure robust AppStream metadata indexing, always use the 4-job architecture:
 ## Technology-Specific Guides
 - **Node.js/Electron**: See [references/nodejs.md](references/nodejs.md).
 - **Wails (Go + Frontend)**: See [references/wails.md](references/wails.md).
+- **Tauri (Rust + Node.js)**: See [references/tauri.md](references/tauri.md).
 
 ## Deployment Standard
 Always use `ostree init --repo=repo --mode=archive-z2` and `flatpak build-update-repo --generate-static-deltas repo` in a modern container to ensure full metadata support.
