@@ -36,6 +36,24 @@ modules:
         commands:
           - "echo 'Installing pnpm...'"
 
+  - name: intltool
+    cleanup: [ "*" ]
+    sources:
+      - type: archive
+        url: https://launchpad.net/intltool/trunk/0.51.0/+download/intltool-0.51.0.tar.gz
+        sha256: 67f39ca2009be64066ee6fdfe9ee699ec992cf00030006df06060006bd060606
+        mirror-urls:
+          - https://mirror.math.princeton.edu/pub/frugalware/frugalware-2.1/source/base/intltool/intltool-0.51.0.tar.gz
+
+  - name: dbus-glib
+    cleanup: [ "*" ]
+    sources:
+      - type: archive
+        url: https://dbus.freedesktop.org/releases/dbus-glib/dbus-glib-0.114.tar.gz
+        sha256: 7e65058882ca1295a492057cd33840ca0ca71261bb950d94c1f400617bc590af
+        mirror-urls:
+          - https://distfiles.alpinelinux.org/distfiles/v3.12/dbus-glib-0.114.tar.gz
+
   - ../shared-modules/libappindicator/libappindicator-gtk3-12.10.json
 
   - name: ai-toolbox
@@ -45,9 +63,9 @@ modules:
     build-commands:
       # 1. Install dependencies
       - pnpm install
-      # 2. Build frontend assets (Tauri macro will embed these during rust compilation)
+      # 2. Build frontend assets
       - pnpm build
-      # 3. Build the production binary using Cargo directly (to avoid tauri-cli bundling errors)
+      # 3. Build the production binary using Cargo directly
       - cargo build --manifest-path tauri/Cargo.toml --release
       # 4. Installation
       - BIN_PATH=$(find tauri/target/release -name ai-toolbox -type f -executable | grep -v "\.d$" | head -n 1);
