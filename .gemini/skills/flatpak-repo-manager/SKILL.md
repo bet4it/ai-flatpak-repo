@@ -37,6 +37,8 @@ Always check for the latest stable, non-EOL runtimes before creating or updating
    - Use **strictly non-interactive** polling.
    - `sleep 10` after push, get Run ID via `gh run list --limit 1 --json databaseId`.
    - Poll status via `gh run view <ID> --json status,conclusion`.
+   - **Verification**: Once build is successful, run `flatpak update --user --appstream <repo-name>` to refresh local cache.
+   - Check version visibility: `flatpak remote-ls <repo-name>` MUST show the correct version.
 5. **Knowledge Capture (CRITICAL)**:
    - Extract "gotchas" and update `references/` or `SKILL.md`.
 
