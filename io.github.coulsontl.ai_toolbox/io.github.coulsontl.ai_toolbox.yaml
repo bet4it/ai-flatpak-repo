@@ -36,53 +36,8 @@ modules:
         commands:
           - "echo 'Installing pnpm...'"
 
-  - name: intltool
-    cleanup: [ "*" ]
-    sources:
-      - type: archive
-        url: https://launchpad.net/intltool/trunk/0.51.0/+download/intltool-0.51.0.tar.gz
-        sha256: 67c74d94196b153b774ab9f89b2fa6c6ba79352407037c8c14d5aeb334e959cd
-
-  - name: dbus-glib
-    cleanup: [ "*" ]
-    sources:
-      - type: archive
-        url: https://dbus.freedesktop.org/releases/dbus-glib/dbus-glib-0.114.tar.gz
-        sha256: c09c5c085b2a0e391b8ee7d783a1d63fe444e96717cc1814d61b5e8fc2827a7c
-
-  - name: libdbusmenu
-    build-options:
-      cflags: -Wno-error
-      env:
-        HAVE_VALGRIND_FALSE: "#"
-        HAVE_VALGRIND_TRUE: ""
-    config-opts:
-      - --disable-static
-      - --disable-gtk-doc
-      - --enable-introspection=no
-      - --disable-vala
-      - --disable-dumper
-      - --disable-tests
-      - --with-gtk=3
-    sources:
-      - type: archive
-        url: https://launchpad.net/libdbusmenu/16.04/16.04.0/+download/libdbusmenu-16.04.0.tar.gz
-        sha256: b9cc4a2acd74509435892823607d966d424bd9ad5d0b00938f27240a1bfa878a
-
-  - name: libappindicator
-    build-options:
-      cflags: -Wno-error
-    config-opts:
-      - --disable-static
-      - --disable-gtk-doc
-      - --disable-tests
-      - --disable-mono-tests
-      - --enable-introspection=no
-      - --with-gtk=3
-    sources:
-      - type: archive
-        url: https://distfiles.alpinelinux.org/distfiles/v3.12/libappindicator-12.10.0.tar.gz
-        sha256: d5907c1f98084acf28fd19593cb70672caa0ca1cf82d747ba6f4830d4cc3b49f
+  # Follow Flathub best practice: Use verified shared-modules for common dependencies
+  - ../shared-modules/libappindicator/libappindicator-gtk3-12.10.json
 
   - name: ai-toolbox
     buildsystem: simple
@@ -91,7 +46,7 @@ modules:
     build-commands:
       # 1. Install dependencies
       - pnpm install
-      # 2. Build frontend assets
+      # 2. Build frontend assets (Tauri macro embeds these from ../dist during rust compilation)
       - pnpm build
       # 3. Build the production binary using Cargo directly
       - cargo build --manifest-path tauri/Cargo.toml --release
