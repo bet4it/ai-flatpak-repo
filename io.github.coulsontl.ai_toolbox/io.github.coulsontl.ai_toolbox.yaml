@@ -69,15 +69,20 @@ modules:
         url: https://launchpad.net/libdbusmenu/16.04/16.04.0/+download/libdbusmenu-16.04.0.tar.gz
         sha256: b9cc4a2acd74509435892823607d966d424bd9ad5d0b00938f27240a1bfa878a
 
-  - name: libayatana-appindicator
-    buildsystem: cmake-ninja
+  - name: libappindicator
+    build-options:
+      cflags: -Wno-error
     config-opts:
-      - -Dgtk3=enabled
-      - -Dauto_features=disabled
+      - --disable-static
+      - --disable-gtk-doc
+      - --disable-tests
+      - --disable-mono-tests
+      - --enable-introspection=no
+      - --with-gtk=3
     sources:
       - type: archive
-        url: https://github.com/AyatanaIndicators/libayatana-appindicator/archive/refs/tags/0.5.93.tar.gz
-        sha256: cbefed7a918a227bf71286246e237fcd3a9c8499b3eaac4897811a869409edf0
+        url: https://distfiles.alpinelinux.org/distfiles/v3.12/libappindicator-12.10.0.tar.gz
+        sha256: d5907c1f98084acf28fd19593cb70672caa0ca1cf82d747ba6f4830d4cc3b49f
 
   - name: ai-toolbox
     buildsystem: simple
