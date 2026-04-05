@@ -56,15 +56,16 @@ jobs:
       - name: Download All Bundles
         uses: actions/download-artifact@v4
         with:
-          pattern: "*-x86_64"
-          merge-multiple: true
           path: bundles
+          merge-multiple: true
 
       - name: Initialize and Import
         run: |
+          ls -R bundles/
           mkdir -p repo
           ostree init --repo=repo --mode=archive-z2
           touch repo/.nojekyll
+          # Search recursively for .flatpak files
           find bundles/ -name "*.flatpak" -print0 | xargs -0 -I {} sh -c 'echo "Importing {}..."; flatpak build-import-bundle repo "{}"'
           # Use modern flatpak to update repo with appstream metadata
           flatpak build-update-repo --generate-static-deltas repo
