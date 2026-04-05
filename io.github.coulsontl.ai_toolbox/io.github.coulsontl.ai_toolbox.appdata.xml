@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.coulsontl.ai_toolbox</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+  <name>AI Toolbox</name>
+  <summary>A comprehensive AI toolbox for developers and AI enthusiasts.</summary>
+  <description>
+    <p>AI Toolbox is a collection of AI-powered tools designed to enhance productivity. It supports multiple AI providers and models, providing a unified interface for various AI tasks.</p>
+  </description>
+  <launchable type="desktop-id">io.github.coulsontl.ai_toolbox.desktop</launchable>
+  <screenshots>
+    <screenshot type="default">
+      <caption>Main interface</caption>
+      <image>https://raw.githubusercontent.com/coulsontl/ai-toolbox/main/docs/screenshots/app_screenshot_claudecode.jpg</image>
+    </screenshot>
+  </screenshots>
+  <url type="homepage">https://github.com/coulsontl/ai-toolbox</url>
+  <releases>
+    <release version="0.7.7" date="2026-04-05" />
+  </releases>
+  <content_rating type="oars-1.1" />
+</component>

@@ -21,6 +21,23 @@ Follow the Reverse Domain Name Notation (RDNN).
 - **GitHub Projects**: Use `io.github.<username>.<ProjectName>`. Replace underscores or hyphens appropriately.
 - **Constraint**: Hyphens (`-`) are ONLY allowed in the final segment of the Application ID.
 
+## Core Workflow
+1. **Source Analysis & Research (PRIORITY)**:
+   - Clone the target repository to the **parent directory** (sibling to `ai-flatpak-repo`) for easy access and long-term maintenance.
+   - Identify the technology stack (e.g., Electron, Wails, Python, Rust) and build system.
+   - Analyze dependencies (check `package.json`, `requirements.txt`, `go.mod`, etc.) and bundled assets.
+   - Check `README.md` and `.github/workflows/` for specific build commands and environment requirements.
+2. **Determine Runtime & Dependency Versions**:
+   - Based on the architecture, find the latest stable, non-EOL Flatpak runtimes (GNOME or Freedesktop).
+   - Locate specific versions/tags for necessary standalone dependencies.
+3. **Create App Folder**: Name the directory after the RDNN App ID.
+4. **Create Required Files**:
+   - `AppID.yaml`: Flatpak manifest. Use exact tags/commits for the app and dependencies.
+   - `AppID.metainfo.xml`, `AppID.desktop`, `icon.png`.
+   - **Icon Path**: Install to standard `hicolor` paths.
+5. **Commit & Push**: Push changes to the repository.
+6. **Monitor & Verify**: Use GitHub Actions logs to verify the build and artifacts.
+
 ## Core Workflow (Multi-Job Architecture)
 To ensure robust AppStream metadata indexing, always use the 4-job architecture:
 1. **discover**: Find all manifests.

@@ -1,0 +1,57 @@
+app-id: io.github.coulsontl.ai_toolbox
+runtime: org.gnome.Platform
+runtime-version: '50'
+sdk: org.gnome.Sdk
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.rust-stable
+command: ai-toolbox
+finish-args:
+  - --share=network
+  - --share=ipc
+  - --socket=fallback-x11
+  - --socket=wayland
+  - --device=dri
+  - --talk-name=org.freedesktop.Notifications
+  - --talk-name=org.kde.StatusNotifierWatcher
+  - --filesystem=xdg-config/ai-toolbox:create
+  - --filesystem=home
+
+build-options:
+  append-path: /usr/lib/sdk/rust-stable/bin
+  env:
+    CARGO_HOME: /run/build/ai-toolbox/cargo
+    PNPM_HOME: /run/build/ai-toolbox/pnpm
+
+modules:
+  - name: pnpm
+    buildsystem: simple
+    build-commands:
+      - npm install -g pnpm
+    sources:
+      - type: shell
+        commands:
+          - "echo 'Installing pnpm via npm...'"
+
+  - name: ai-toolbox
+    buildsystem: simple
+    build-commands:
+      # Frontend build
+      - pnpm install --frozen-lockfile
+      - pnpm build
+      # Rust/Tauri build
+      - cd tauri && cargo build --release
+      # Installation
+      - install -Dm755 ../tauri/target/release/ai-toolbox -t /app/bin/
+      - install -Dm644 ../io.github.coulsontl.ai_toolbox.desktop -t /app/share/applications/
+      - install -Dm644 ../io.github.coulsontl.ai_toolbox.appdata.xml -t /app/share/metainfo/
+      - install -Dm644 ../icon.png /app/share/icons/hicolor/128x128/apps/io.github.coulsontl.ai_toolbox.png
+    sources:
+      - type: git
+        url: https://github.com/coulsontl/ai-toolbox.git
+        tag: v0.7.7
+    modules:
+      - name: webkit2gtk-dependencies
+        buildsystem: simple
+        cleanup: ["*"]
+        build-commands:
+          - "true"

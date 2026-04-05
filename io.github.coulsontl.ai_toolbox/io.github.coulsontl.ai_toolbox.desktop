@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=AI Toolbox
+Comment=Personal AI Tools Collection
+Exec=ai-toolbox
+Icon=io.github.coulsontl.ai_toolbox
+Terminal=false
+Type=Application
+Categories=Development;Utility;
+Keywords=AI;Toolbox;ChatGPT;Claude;
