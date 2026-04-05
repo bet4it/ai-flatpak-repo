@@ -41,20 +41,38 @@ modules:
     sources:
       - type: archive
         url: https://launchpad.net/intltool/trunk/0.51.0/+download/intltool-0.51.0.tar.gz
-        sha256: 67f39ca2009be64066ee6fdfe9ee699ec992cf00030006df06060006bd060606
-        mirror-urls:
-          - https://mirror.math.princeton.edu/pub/frugalware/frugalware-2.1/source/base/intltool/intltool-0.51.0.tar.gz
+        sha256: 67c74d94196b153b774ab9f89b2fa6c6ba79352407037c8c14d5aeb334e959cd
 
   - name: dbus-glib
     cleanup: [ "*" ]
     sources:
       - type: archive
         url: https://dbus.freedesktop.org/releases/dbus-glib/dbus-glib-0.114.tar.gz
-        sha256: 7e65058882ca1295a492057cd33840ca0ca71261bb950d94c1f400617bc590af
-        mirror-urls:
-          - https://distfiles.alpinelinux.org/distfiles/v3.12/dbus-glib-0.114.tar.gz
+        sha256: c09c5c085b2a0e391b8ee7d783a1d63fe444e96717cc1814d61b5e8fc2827a7c
 
-  - ../shared-modules/libappindicator/libappindicator-gtk3-12.10.json
+  - name: libdbusmenu
+    config-opts:
+      - --disable-static
+      - --disable-gtk-doc
+      - --enable-introspection=no
+      - --disable-vala
+      - --disable-dumper
+      - --disable-tests
+      - --with-gtk=3
+    sources:
+      - type: archive
+        url: https://launchpad.net/libdbusmenu/16.04/16.04.0/+download/libdbusmenu-16.04.0.tar.gz
+        sha256: b9cc4a2acd74509435892823607d966d424bd9ad5d0b00938f27240a1bfa878a
+
+  - name: libayatana-appindicator
+    buildsystem: cmake-ninja
+    config-opts:
+      - -Dgtk3=enabled
+      - -Dauto_features=disabled
+    sources:
+      - type: archive
+        url: https://github.com/AyatanaIndicators/libayatana-appindicator/archive/refs/tags/0.5.93.tar.gz
+        sha256: d0ea996ca6006fa69bc9da600096cc60307bb0960cd00ecfc906660600aaeb63
 
   - name: ai-toolbox
     buildsystem: simple
