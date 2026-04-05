@@ -72,7 +72,7 @@ modules:
     sources:
       - type: archive
         url: https://github.com/AyatanaIndicators/libayatana-appindicator/archive/refs/tags/0.5.93.tar.gz
-        sha256: d0ea996ca6006fa69bc9da600096cc60307bb0960cd00ecfc906660600aaeb63
+        sha256: cbefed7a918a227bf71286246e237fcd3a9c8499b3eaac4897811a869409edf0
 
   - name: ai-toolbox
     buildsystem: simple
