@@ -4,46 +4,33 @@ description: Manage, package, and deploy Flatpak applications to a personal repo
 ---
 # Flatpak Repository Manager
 
-## Runtime Version Detection (CRITICAL)
-Always check for the latest stable, non-EOL runtimes before creating a manifest.
-- **Command**: `flatpak remote-ls flathub --user | grep -E "org.gnome.Platform|org.freedesktop.Platform"`
-- **Current Standard (as of Apr 2026)**:
-  - `org.gnome.Platform` branch: `50`
-  - `org.freedesktop.Platform` branch: `25.08`
-- **Rule**: If a runtime branch is EOL, upgrade immediately to the latest available numeric branch.
-
 ## Version & Source Control (MANDATORY)
 Every application MUST have a version displayed in the repository.
 1. **Find Latest Version**: Use `gh release view --repo <URL>` or `git ls-remote --tags <URL>` to find the latest stable tag/release.
 2. **Lock Source**: In the manifest (`.yaml`), use the exact `tag` or `commit` hash. Do NOT use `branch: main` for stable releases.
-3. **AppStream Release Tag**: You MUST add a `<releases>` section to the `AppID.metainfo.xml` file. This is what Flatpak uses to populate the "Version" column.
+3. **AppStream Release Tag**: You MUST add a `<releases>` section to the `AppID.appdata.xml` file.
    ```xml
    <releases>
      <release version="1.2.3" date="2024-04-04" />
    </releases>
    ```
+4. **Metadata Placement**: Ensure the appdata file is installed to `/app/share/metainfo/AppID.appdata.xml`.
 
 ## Naming Conventions
 Follow the Reverse Domain Name Notation (RDNN).
-- **GitHub Projects**: Use `io.github.<username>.<ProjectName>`. Replace hyphens in the username or project name with underscores.
+- **GitHub Projects**: Use `io.github.<username>.<ProjectName>`. Replace underscores or hyphens appropriately.
 - **Constraint**: Hyphens (`-`) are ONLY allowed in the final segment of the Application ID.
 
-## Core Workflow
-1. **Research & Prepare**:
-   - Clone target repo outside `ai-flatpak-repo`.
-   - Check `README.md` and `.github/workflows/` for build commands.
-   - **Check latest runtimes** using the command above.
-2. **Create App Folder**: Name the directory after the App ID (e.g., `io.github.id_root.Synapse`).
-3. **Create Required Files**:
-   - `AppID.yaml`: Flatpak manifest. Ensure it uses the latest runtime versions.
-   - `AppID.metainfo.xml`, `AppID.desktop`, `icon.png`.
-   - **Icon Path**: If non-standard size, install to `hicolor/scalable/apps/`.
-4. **Commit & Push**: Push to GitHub.
-5. **Monitor & Verify**: Use `gh run list --limit 1` and `gh run view --log-failed`. Confirm `.flatpak` bundle exists in artifacts.
+## Core Workflow (Multi-Job Architecture)
+To ensure robust AppStream metadata indexing, always use the 4-job architecture:
+1. **discover**: Find all manifests.
+2. **build**: Parallel matrix build of `.flatpak` bundles.
+3. **reconstruct**: Run in `ghcr.io/flathub-infra/flatpak-github-actions:freedesktop-25.08`. Download all bundles, `ostree init`, `flatpak build-import-bundle`, and `flatpak build-update-repo`.
+4. **deploy**: Publish the reconstructed `repo/` to GitHub Pages.
 
 ## Technology-Specific Guides
 - **Node.js/Electron**: See [references/nodejs.md](references/nodejs.md).
 - **Wails (Go + Frontend)**: See [references/wails.md](references/wails.md).
 
-## Deployment
-Uses `ghcr.io/flathub-infra/flatpak-github-actions:freedesktop-25.08`. Never hardcode paths in `build.yml`.
+## Deployment Standard
+Always use `ostree init --repo=repo --mode=archive-z2` and `flatpak build-update-repo --generate-static-deltas repo` in a modern container to ensure full metadata support.
