@@ -36,13 +36,27 @@ Example (installing AI Toolbox):
 flatpak install ai-tools-repo io.github.coulsontl.ai_toolbox
 ```
 
-### 5. Run
+### 5. Force Update or Reinstall
+
+If you see "already installed" but want to force the latest version (e.g., after a fix):
+
+**Option A: Standard Update**
+```bash
+flatpak update --user io.github.coulsontl.ai_toolbox
+```
+
+**Option B: Force Reinstall (Recommended for debugging fixes)**
+```bash
+flatpak install --user --reinstall ai-tools-repo io.github.coulsontl.ai_toolbox
+```
+
+### 6. Run
 
 ```bash
 flatpak run io.github.coulsontl.ai_toolbox
 ```
 
-### 6. Update Installed Applications
+### 7. Update All Installed Applications
 
 ```bash
 flatpak update
