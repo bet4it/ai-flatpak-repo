@@ -18,26 +18,19 @@ finish-args:
   - --filesystem=home
 
 build-options:
-  append-path: /usr/lib/sdk/rust-stable/bin:/usr/lib/sdk/node24/bin
+  append-path: /usr/lib/sdk/rust-stable/bin:/usr/lib/sdk/node24/bin:/app/bin
   env:
     CARGO_HOME: /run/build/ai-toolbox/cargo
     PNPM_HOME: /run/build/ai-toolbox/pnpm
-    # Enable network for pnpm/cargo
     XDG_CACHE_HOME: /run/build/ai-toolbox/cache
 
 modules:
-  - name: node-env
-    buildsystem: simple
-    build-commands:
-      - "ln -s /usr/lib/sdk/node24/bin/node /usr/bin/node"
-      - "ln -s /usr/lib/sdk/node24/bin/npm /usr/bin/npm"
-
   - name: pnpm
     buildsystem: simple
     build-options:
       build-args: ["--share=network"]
     build-commands:
-      - npm install -g pnpm
+      - npm install -g pnpm --prefix=/app
     sources:
       - type: shell
         commands:
@@ -48,10 +41,10 @@ modules:
     build-options:
       build-args: ["--share=network"]
     build-commands:
-      # Frontend build (needs network)
+      # Frontend build
       - pnpm install --frozen-lockfile
       - pnpm build
-      # Rust/Tauri build (needs network)
+      # Rust/Tauri build
       - cd tauri && cargo build --release
       # Installation
       - install -Dm755 ../tauri/target/release/ai-toolbox -t /app/bin/
