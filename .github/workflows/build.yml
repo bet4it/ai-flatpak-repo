@@ -45,56 +45,55 @@ jobs:
           cache: true
           cache-key: flatpak-builder-${{ matrix.app }}-${{ github.sha }}
 
-      - name: Create Repo Segment
-        run: |
-          ostree init --repo=repo --mode=archive-z2
-          flatpak build-import-bundle repo ${{ matrix.app }}.flatpak
-          # Ensure AppStream metadata is indexed in this segment
-          flatpak build-update-repo repo
+  reconstruct:
+    name: Reconstruct Repository
+    needs: build
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/flathub-infra/flatpak-github-actions:freedesktop-25.08
+      options: --privileged
+    steps:
+      - name: Download All Bundles
+        uses: actions/download-artifact@v4
+        with:
+          pattern: "*-x86_64"
+          merge-multiple: true
+          path: bundles
 
-      - name: Upload Repo Segment
+      - name: Initialize and Import
+        run: |
+          mkdir -p repo
+          ostree init --repo=repo --mode=archive-z2
+          touch repo/.nojekyll
+          find bundles/ -name "*.flatpak" -print0 | xargs -0 -I {} sh -c 'echo "Importing {}..."; flatpak build-import-bundle repo "{}"'
+          # Use modern flatpak to update repo with appstream metadata
+          flatpak build-update-repo --generate-static-deltas repo
+
+      - name: Upload Final Repo
         uses: actions/upload-artifact@v4
         with:
-          name: repo-${{ matrix.app }}
+          name: final-repo
           path: repo/
 
   deploy:
     name: Deploy to GitHub Pages
-    needs: build
+    needs: reconstruct
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Download All Repo Segments
+      - name: Download Final Repo
         uses: actions/download-artifact@v4
         with:
-          pattern: repo-*
-          path: segments
+          name: final-repo
+          path: repo
 
-      - name: Reconstruct Repository
-        run: |
-          sudo apt-get update && sudo apt-get install -y flatpak ostree rsync
-          mkdir -p repo
-          ostree init --repo=repo --mode=archive-z2
-          touch repo/.nojekyll
-          
-          # Use ostree pull-local to merge repo segments correctly
-          # This preserves the AppStream branch generated in the build jobs
-          find segments/ -maxdepth 2 -name "config" | xargs -I {} dirname {} | while read d; do
-            echo "Merging $d..."
-            ostree --repo=repo pull-local "$d"
-          done
-          
-          # Final update
-          flatpak build-update-repo --generate-static-deltas repo
-          
-          # Final summary update
-          ostree --repo=repo summary -u
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v4
         with:
           path: ./repo
+
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
