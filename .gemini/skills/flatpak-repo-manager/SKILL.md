@@ -31,16 +31,20 @@ Always check for the latest stable, non-EOL runtimes before creating or updating
 1. **Source Analysis & Research (PRIORITY)**:
    - Clone target repo to **parent directory** (sibling to `ai-flatpak-repo`).
    - Identify stack (Electron, Tauri, etc.) and dependencies.
+   - **Flathub Research**: Search [github.com/flathub](https://github.com/flathub) for similar apps to see how they handle specific libraries or build complexities.
 2. **Setup**: Create folder named after App ID. Add `.yaml`, `.metainfo.xml`, `.desktop`, and `icon.png`.
 3. **Commit & Push**: Push changes to repository.
 4. **Monitor & Verify (MANDATORY)**:
    - Use **strictly non-interactive** polling.
    - `sleep 10` after push, get Run ID via `gh run list --limit 1 --json databaseId`.
    - Poll status via `gh run view <ID> --json status,conclusion`.
-   - **Verification**: Once build is successful, run `flatpak update --user --appstream <repo-name>` to refresh local cache.
-   - Check version visibility: `flatpak remote-ls <repo-name>` MUST show the correct version.
+   - **Verification & Run (CRITICAL)**:
+     - Once build is successful, run `flatpak update --user --appstream <repo-name>`.
+     - **Install and Run**: `flatpak install <repo-name> <AppID>` and `flatpak run <AppID>`.
+     - **DEBUG**: If the app fails to launch (e.g., missing `.so`), research solutions on Flathub and update the manifest.
+     - **Completion**: Task is ONLY finished when the app launches successfully and UI is visible.
 5. **Knowledge Capture (CRITICAL)**:
-   - Extract "gotchas" and update `references/` or `SKILL.md`.
+   - Extract "gotchas" and update `references/` or `SKILL.md`. Every lesson learned from Flathub MUST be documented.
 
 ## 5. Technology-Specific Guides
 - **Node.js/Electron**: See [references/nodejs.md](references/nodejs.md).
