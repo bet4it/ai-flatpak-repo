@@ -36,7 +36,10 @@ Follow the Reverse Domain Name Notation (RDNN).
    - `AppID.metainfo.xml`, `AppID.desktop`, `icon.png`.
    - **Icon Path**: Install to standard `hicolor` paths.
 5. **Commit & Push**: Push changes to the repository.
-6. **Monitor & Verify**: Use GitHub Actions logs to verify the build and artifacts.
+6. **Monitor & Verify (MANDATORY)**:
+   - Use `gh run list --limit 1` to track the build progress immediately after pushing.
+   - Use `gh run view --log-failed` if the build fails to diagnose issues.
+   - **Success Condition**: The build must complete successfully, and the `.flatpak` bundle must exist in the artifacts. Do NOT consider the task finished until the remote repository is updated.
 
 ## Core Workflow (Multi-Job Architecture)
 To ensure robust AppStream metadata indexing, always use the 4-job architecture:
