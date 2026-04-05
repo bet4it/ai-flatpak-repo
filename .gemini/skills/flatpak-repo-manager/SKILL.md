@@ -4,61 +4,46 @@ description: Manage, package, and deploy Flatpak applications to a personal repo
 ---
 # Flatpak Repository Manager
 
-## Version & Source Control (MANDATORY)
+## 1. Runtime Version Detection (CRITICAL)
+Always check for the latest stable, non-EOL runtimes before creating or updating a manifest.
+- **Detection Command**: `flatpak remote-ls flathub --user | grep -E "org.gnome.Platform|org.freedesktop.Platform"`
+- **Selection Rule**: If a runtime branch is marked as EOL or nearing it, upgrade immediately to the latest available numeric branch (e.g., GNOME 47 -> 50).
+- **Current Standard (as of Apr 2026)**:
+  - `org.gnome.Platform` branch: `50`
+  - `org.freedesktop.Platform` branch: `25.08`
+
+## 2. Version & Source Control (MANDATORY)
 Every application MUST have a version displayed in the repository.
-1. **Find Latest Version**: Use `gh release view --repo <URL>` or `git ls-remote --tags <URL>` to find the latest stable tag/release.
-2. **Lock Source**: In the manifest (`.yaml`), use the exact `tag` or `commit` hash. Do NOT use `branch: main` for stable releases.
+1. **Find Latest Version**: Use `gh release view --repo <URL>` or `git ls-remote --tags <URL>` to find the latest stable tag.
+2. **Lock Source**: In the manifest (`.yaml`), use the exact `tag` or `commit` hash. **NEVER** use `branch: main` for stable releases.
 3. **AppStream Release Tag**: You MUST add a `<releases>` section to the `AppID.appdata.xml` file.
    ```xml
    <releases>
-     <release version="1.2.3" date="2024-04-04" />
+     <release version="1.2.3" date="2026-04-04" />
    </releases>
    ```
 4. **Metadata Placement**: Ensure the appdata file is installed to `/app/share/metainfo/AppID.appdata.xml`.
 
-## Naming Conventions
-Follow the Reverse Domain Name Notation (RDNN).
-- **GitHub Projects**: Use `io.github.<username>.<ProjectName>`. Replace underscores or hyphens appropriately.
-- **Constraint**: Hyphens (`-`) are ONLY allowed in the final segment of the Application ID.
+## 3. Naming Conventions (RDNN)
+- **GitHub Projects**: Use `io.github.<username>.<ProjectName>`. 
+- **Rule**: Replace hyphens in username/project with underscores. Hyphens (`-`) are **ONLY** allowed in the final segment of the Application ID.
 
-## Core Workflow
-1. **Source Analysis & Research (PRIORITY)**:
-   - Clone the target repository to the **parent directory** (sibling to `ai-flatpak-repo`) for easy access and long-term maintenance.
-   - Identify the technology stack (e.g., Electron, Wails, Python, Rust) and build system.
-   - Analyze dependencies (check `package.json`, `requirements.txt`, `go.mod`, etc.) and bundled assets.
-   - Check `README.md` and `.github/workflows/` for specific build commands and environment requirements.
-2. **Determine Runtime & Dependency Versions**:
-   - Based on the architecture, find the latest stable, non-EOL Flatpak runtimes (GNOME or Freedesktop).
-   - Locate specific versions/tags for necessary standalone dependencies.
-3. **Create App Folder**: Name the directory after the RDNN App ID.
-4. **Create Required Files**:
-   - `AppID.yaml`: Flatpak manifest. Use exact tags/commits for the app and dependencies.
-   - `AppID.metainfo.xml`, `AppID.desktop`, `icon.png`.
-   - **Icon Path**: Install to standard `hicolor` paths.
-5. **Commit & Push**: Push changes to the repository.
-6. **Monitor & Verify (MANDATORY)**:
-   - Use **strictly non-interactive** commands.
-   - After `push`, `sleep 10` and run `gh run list --limit 1 --repo <URL> --json databaseId --jq ".[0].databaseId"` to capture the Run ID.
-   - Poll the status using `gh run view <ID> --repo <URL> --json jobs,status,conclusion`.
-   - Use `sleep 300` (5 minutes) between checks for long-running builds.
-   - **Success Condition**: The `status` must be `completed` and `conclusion` must be `success`. Do NOT consider the task finished until the remote build and deployment are verified.
+## 4. Core Workflow
+### Local Preparation
+1. **Research**: Clone target repo outside `ai-flatpak-repo`, identify build commands and dependencies.
+2. **Setup**: Create folder named after App ID. Add `AppID.yaml`, `AppID.appdata.xml`, `AppID.desktop`, and `icon.png`.
+3. **Validate**: Ensure icon is 512x512 or scalable.
 
-7. **Knowledge Capture (CRITICAL)**:
-   - After a successful (or even a difficult failed) build, extract technical "gotchas" and solutions.
-   - Update the "Technology-Specific Guides" or add a "Troubleshooting" section in `SKILL.md` to prevent future regressions.
-   - Document architecture-specific patterns (e.g., Tauri, Flutter, Go).
+### CI/CD Architecture (4-Job Pipeline)
+To ensure robust AppStream indexing and Version support, the repository uses:
+1. **discover**: Automatically detects apps by searching for `.yaml` files.
+2. **build**: Parallel matrix build producing `.flatpak` bundles.
+3. **reconstruct**: Uses `freedesktop-25.08` container to merge all bundles and generate the `appstream` branch via `flatpak build-update-repo`.
+4. **deploy**: Publishes the final repo to GitHub Pages.
 
-## Core Workflow (Multi-Job Architecture)
-To ensure robust AppStream metadata indexing, always use the 4-job architecture:
-1. **discover**: Find all manifests.
-2. **build**: Parallel matrix build of `.flatpak` bundles.
-3. **reconstruct**: Run in `ghcr.io/flathub-infra/flatpak-github-actions:freedesktop-25.08`. Download all bundles, `ostree init`, `flatpak build-import-bundle`, and `flatpak build-update-repo`.
-4. **deploy**: Publish the reconstructed `repo/` to GitHub Pages.
-
-## Technology-Specific Guides
+## 5. Technology-Specific Guides
 - **Node.js/Electron**: See [references/nodejs.md](references/nodejs.md).
 - **Wails (Go + Frontend)**: See [references/wails.md](references/wails.md).
-- **Tauri (Rust + Node.js)**: See [references/tauri.md](references/tauri.md).
 
-## Deployment Standard
-Always use `ostree init --repo=repo --mode=archive-z2` and `flatpak build-update-repo --generate-static-deltas repo` in a modern container to ensure full metadata support.
+## 6. Deployment Standard
+Always use `ostree init --repo=repo --mode=archive-z2` and `flatpak build-update-repo --generate-static-deltas repo` in a modern container to maintain full metadata and version visibility.
