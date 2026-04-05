@@ -6,48 +6,41 @@ Tauri apps require both Node.js (frontend) and Rust (backend) SDK extensions.
 ```yaml
 sdk-extensions:
   - org.freedesktop.Sdk.Extension.rust-stable
-  - org.freedesktop.Sdk.Extension.node24 # Use the latest stable
+  - org.freedesktop.Sdk.Extension.node24
 ```
 
-## Build Environment
-Configure paths and environment variables in `build-options`:
+## Dependency Management (Standardized)
+**NEVER** manually define common libraries like `libappindicator`. Use the Flathub `shared-modules` submodule.
 
+1. Add the submodule: `git submodule add https://github.com/flathub/shared-modules.git`
+2. Reference in manifest:
 ```yaml
-build-options:
-  append-path: /usr/lib/sdk/rust-stable/bin:/usr/lib/sdk/node24/bin:/app/bin
-  env:
-    CARGO_HOME: /run/build/app-id/cargo
-    PNPM_HOME: /run/build/app-id/pnpm
+modules:
+  - ../shared-modules/libappindicator/libappindicator-gtk3-12.10.json
+```
+
+## Production Build Workflow
+To avoid `Connection refused` (localhost:5173) errors, you MUST perform a production build that embeds assets.
+
+**Manifest Commands:**
+```yaml
+build-commands:
+  - pnpm install
+  - pnpm build  # Generates static assets in /dist
+  - cargo build --manifest-path tauri/Cargo.toml --release # Embeds assets from /dist
 ```
 
 ## Key "Gotchas" & Solutions
 
-### 1. Global Tools Installation (npm/pnpm)
-The `/usr` filesystem is read-only. Install global tools to `/app`:
-```bash
-npm install -g pnpm --prefix=/app
-```
+### 1. Bypassing tauri-cli Bundling
+`pnpm tauri build` tries to create `.deb`/`.appimage` packages which fail in the sandbox. Use `cargo build --release` directly after `pnpm build`.
 
-### 2. Network Access
-Enable network per module if you need to fetch dependencies during build (not recommended for Flathub, but necessary for quick repo updates):
-```yaml
-build-options:
-  build-args: ["--share=network"]
-```
-
-### 3. Locating the Binary
-Binary paths in Rust/Tauri can vary (especially with nested directories). Use a robust find command:
+### 2. Locating the Binary
+Binary paths in Rust can be tricky. Use a robust find command:
 ```bash
-BIN_PATH=$(find . -name binary-name -type f -executable | grep release | head -n 1)
+BIN_PATH=$(find tauri/target/release -name binary-name -type f -executable | grep -v "\.d$" | head -n 1)
 install -Dm755 "$BIN_PATH" /app/bin/binary-name
 ```
 
-### 4. Bundled Resources
-Explicitly list metadata files in `sources` to ensure they are present in the build sandbox:
-```yaml
-sources:
-  - type: git
-    url: ...
-  - type: file
-    path: io.github.user.App.desktop
-```
+### 3. CI/CD Submodule Support
+Ensure `actions/checkout` has `submodules: true` to prevent build failures.
