@@ -40,7 +40,7 @@ modules:
     sources:
       - type: archive
         url: https://launchpad.net/libdbusmenu/16.04/16.04.0/+download/libdbusmenu-16.04.0.tar.gz
-        sha256: b3812a242cf05c466ed58286a12e890dc6c33630d8ad8bc2d90ec3b5bad05ca7
+        sha256: b9cc4a2acd74509435892823607d966d424bd9ad5d0b00938f27240a1bfa878a
     build-options:
       cflags: -Wno-error
     config-opts:
