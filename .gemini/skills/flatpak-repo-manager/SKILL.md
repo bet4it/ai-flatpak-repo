@@ -37,10 +37,11 @@ Follow the Reverse Domain Name Notation (RDNN).
    - **Icon Path**: Install to standard `hicolor` paths.
 5. **Commit & Push**: Push changes to the repository.
 6. **Monitor & Verify (MANDATORY)**:
-   - Use **non-interactive** commands to track progress.
-   - Run `gh run view --watch --repo <URL>` to follow the build logs in real-time without manual selection.
-   - Use `gh run view --log-failed` if the build fails to diagnose issues.
-   - **Success Condition**: The build must complete successfully. Do NOT consider the task finished until the remote repository is updated.
+   - Use **strictly non-interactive** commands.
+   - After `push`, `sleep 10` and run `gh run list --limit 1 --repo <URL> --json databaseId --jq ".[0].databaseId"` to capture the Run ID.
+   - Poll the status using `gh run view <ID> --repo <URL> --json jobs,status,conclusion`.
+   - Use `sleep 300` (5 minutes) between checks for long-running builds.
+   - **Success Condition**: The `status` must be `completed` and `conclusion` must be `success`. Do NOT consider the task finished until the remote build and deployment are verified.
 
 ## Core Workflow (Multi-Job Architecture)
 To ensure robust AppStream metadata indexing, always use the 4-job architecture:
