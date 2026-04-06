@@ -26,9 +26,10 @@ To avoid `Connection refused` (localhost:5173) errors, you MUST perform a produc
 ```yaml
 build-commands:
   - pnpm install
-  - pnpm build  # Generates static assets in /dist
-  - cargo build --manifest-path tauri/Cargo.toml --release # Embeds assets from /dist
+  - pnpm tauri build --no-bundle
 ```
+
+`pnpm tauri build --no-bundle` is the preferred default for Tauri 2 packaging. It runs `beforeBuildCommand`, compiles the Rust binary, and skips generating `.deb` / `.AppImage` bundles that are not needed for Flatpak.
 
 ## Key "Gotchas" & Solutions
 
@@ -45,7 +46,9 @@ Even if libraries (like `libappindicator`) are built into `/app/lib`, the applic
    ```
 
 ### 2. Bypassing tauri-cli Bundling
-`pnpm tauri build` tries to create `.deb`/`.appimage` packages which fail in the sandbox. Use `cargo build --release` directly after `pnpm build`.
+Use `pnpm tauri build --no-bundle` to skip `.deb` / `.AppImage` generation inside Flatpak builds.
+
+Do not assume `cargo build --release` is a safe replacement. On some Tauri 2 projects it can produce a binary that still behaves like a dev webview build and tries to load `devUrl` such as `http://127.0.0.1:5173`.
 
 ### 2. Locating the Binary
 Binary paths in Rust can be tricky. Use a robust find command:
