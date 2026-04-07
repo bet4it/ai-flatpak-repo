@@ -52,13 +52,41 @@ modules:
       - install -Dm644 dev.limux.linux.metainfo.xml /app/share/metainfo/dev.limux.linux.metainfo.xml
       - install -Dm644 icon.png /app/share/icons/hicolor/512x512/apps/dev.limux.linux.png
       - install -Dm644 ghostty/zig-out/lib/libghostty.so /app/lib/libghostty.so
-      - install -d /app/share/limux/terminfo/g /app/share/limux/terminfo/x
-      - if [ -f ghostty/zig-out/share/terminfo/g/ghostty ]; then install -Dm644 ghostty/zig-out/share/terminfo/g/ghostty /app/share/limux/terminfo/g/ghostty; fi
-      - if [ -f ghostty/zig-out/share/terminfo/x/xterm-ghostty ]; then install -Dm644 ghostty/zig-out/share/terminfo/x/xterm-ghostty /app/share/limux/terminfo/x/xterm-ghostty; fi
+      - |
+        set -e
+        GHOSTTY_SHARE_DIR=""
+        for candidate in ghostty/zig-out/share/ghostty /usr/local/share/ghostty /usr/share/ghostty; do
+          if [ -d "$candidate" ]; then
+            GHOSTTY_SHARE_DIR="$candidate"
+            break
+          fi
+        done
+        if [ -z "$GHOSTTY_SHARE_DIR" ]; then
+          printf '%s\n' 'Ghostty resources directory not found.' >&2
+          exit 1
+        fi
+        GHOSTTY_TERMINFO_DIR=""
+        for candidate in "$(dirname "$GHOSTTY_SHARE_DIR")/terminfo" /usr/local/share/terminfo /usr/share/terminfo; do
+          if [ -f "$candidate/g/ghostty" ] || [ -f "$candidate/x/xterm-ghostty" ]; then
+            GHOSTTY_TERMINFO_DIR="$candidate"
+            break
+          fi
+        done
+        if [ -z "$GHOSTTY_TERMINFO_DIR" ]; then
+          printf '%s\n' 'Ghostty terminfo directory not found.' >&2
+          exit 1
+        fi
+        install -d /app/share/limux/ghostty /app/share/limux/terminfo/g /app/share/limux/terminfo/x
+        cp -a "$GHOSTTY_SHARE_DIR"/. /app/share/limux/ghostty/
+        if [ -f "$GHOSTTY_TERMINFO_DIR/g/ghostty" ]; then
+          install -Dm644 "$GHOSTTY_TERMINFO_DIR/g/ghostty" /app/share/limux/terminfo/g/ghostty
+        fi
+        if [ -f "$GHOSTTY_TERMINFO_DIR/x/xterm-ghostty" ]; then
+          install -Dm644 "$GHOSTTY_TERMINFO_DIR/x/xterm-ghostty" /app/share/limux/terminfo/x/xterm-ghostty
+        fi
       - install -Dm644 rust/limux-host-linux/icons/limux-globe-symbolic.svg /app/share/icons/hicolor/scalable/actions/limux-globe-symbolic.svg
       - install -Dm644 rust/limux-host-linux/icons/limux-split-horizontal-symbolic.svg /app/share/icons/hicolor/scalable/actions/limux-split-horizontal-symbolic.svg
       - install -Dm644 rust/limux-host-linux/icons/limux-split-vertical-symbolic.svg /app/share/icons/hicolor/scalable/actions/limux-split-vertical-symbolic.svg
-      - cp -a ghostty/zig-out/share/ghostty /app/share/limux/ghostty
     sources:
       - type: git
         url: https://github.com/am-will/limux.git
