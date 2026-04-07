@@ -52,8 +52,9 @@ modules:
       - install -Dm644 dev.limux.linux.metainfo.xml /app/share/metainfo/dev.limux.linux.metainfo.xml
       - install -Dm644 icon.png /app/share/icons/hicolor/512x512/apps/dev.limux.linux.png
       - install -Dm644 ghostty/zig-out/lib/libghostty.so /app/lib/libghostty.so
-      - install -Dm644 ghostty/zig-out/share/terminfo/g/ghostty /app/share/limux/terminfo/g/ghostty
-      - install -Dm644 ghostty/zig-out/share/terminfo/x/xterm-ghostty /app/share/limux/terminfo/x/xterm-ghostty
+      - install -d /app/share/limux/terminfo/g /app/share/limux/terminfo/x
+      - if [ -f ghostty/zig-out/share/terminfo/g/ghostty ]; then install -Dm644 ghostty/zig-out/share/terminfo/g/ghostty /app/share/limux/terminfo/g/ghostty; fi
+      - if [ -f ghostty/zig-out/share/terminfo/x/xterm-ghostty ]; then install -Dm644 ghostty/zig-out/share/terminfo/x/xterm-ghostty /app/share/limux/terminfo/x/xterm-ghostty; fi
       - install -Dm644 rust/limux-host-linux/icons/limux-globe-symbolic.svg /app/share/icons/hicolor/scalable/actions/limux-globe-symbolic.svg
       - install -Dm644 rust/limux-host-linux/icons/limux-split-horizontal-symbolic.svg /app/share/icons/hicolor/scalable/actions/limux-split-horizontal-symbolic.svg
       - install -Dm644 rust/limux-host-linux/icons/limux-split-vertical-symbolic.svg /app/share/icons/hicolor/scalable/actions/limux-split-vertical-symbolic.svg
