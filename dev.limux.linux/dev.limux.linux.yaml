@@ -51,7 +51,7 @@ modules:
         set -e
         export PATH="/app/bin:/usr/lib/sdk/rust-stable/bin:$PATH"
         cd ghostty
-        zig build -Dapp-runtime=gtk -Dflatpak=true -Doptimize=ReleaseFast
+        zig build -Dapp-runtime=gtk -Dflatpak=true -Doptimize=ReleaseFast -fno-sys=gtk4-layer-shell
       - cargo build --release --manifest-path Cargo.toml
       - install -Dm755 target/release/limux /app/bin/limux
       - install -Dm644 dev.limux.linux.desktop /app/share/applications/dev.limux.linux.desktop
