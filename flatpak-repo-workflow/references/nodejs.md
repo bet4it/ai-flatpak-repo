@@ -11,7 +11,7 @@ For GitHub Actions with network access (`--share=network`):
 2. **Set `npm_config_nodedir`**: Point this to extracted headers for offline native module compilation.
 
 ## The TAR_OPTIONS and Permissions Fix
-Flatpak sandboxes block `fchown`. 
+Flatpak sandboxes block `fchown`.
 - **Fix**: Use the YAML block scalar `|` to ensure environment variables persist. For `pnpm`, use **Double Insurance**:
   1. **Config Set**: `pnpm config set nodedir /app/etc/node-headers` and `pnpm config set unsafe-perm true`.
   2. **Env Vars**: Set `export TAR_OPTIONS="--no-same-owner"` and `export npm_config_unsafe_perm=true`.
