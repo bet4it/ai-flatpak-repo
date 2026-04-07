@@ -46,12 +46,17 @@ modules:
         export PATH="/app/bin:/usr/lib/sdk/rust-stable/bin:$PATH"
         cd ghostty
         zig build -Dapp-runtime=none -Doptimize=ReleaseFast
+      - install -Dm644 ghostty/zig-out/lib/libghostty.so /app/lib/libghostty.so
+      - |
+        set -e
+        export PATH="/app/bin:/usr/lib/sdk/rust-stable/bin:$PATH"
+        cd ghostty
+        zig build -Dapp-runtime=gtk -Dflatpak=true -Doptimize=ReleaseFast
       - cargo build --release --manifest-path Cargo.toml
       - install -Dm755 target/release/limux /app/bin/limux
       - install -Dm644 dev.limux.linux.desktop /app/share/applications/dev.limux.linux.desktop
       - install -Dm644 dev.limux.linux.metainfo.xml /app/share/metainfo/dev.limux.linux.metainfo.xml
       - install -Dm644 icon.png /app/share/icons/hicolor/512x512/apps/dev.limux.linux.png
-      - install -Dm644 ghostty/zig-out/lib/libghostty.so /app/lib/libghostty.so
       - |
         set -e
         GHOSTTY_SHARE_DIR=""
