@@ -44,6 +44,7 @@ A packaging task is not complete unless the agent has attempted all applicable s
 - Added the manifest, desktop file, metainfo/appdata, and icon asset (or documented the exact missing upstream asset blocker).
 - Performed local validation relevant to the stack.
 - Reported concrete outcomes and blockers, not just findings.
+- Followed the GitHub Actions build through to a current remote result; do not treat a stale earlier status check as active monitoring.
 
 ## 1. Runtime Version Detection (CRITICAL)
 Always check for the latest stable, non-EOL runtimes before creating or updating a manifest.
@@ -59,9 +60,13 @@ Always check for the latest stable, non-EOL runtimes before creating or updating
    - MUST include a `<releases>` section for version visibility.
 
 ## 3. Naming Conventions (RDNN)
-- **GitHub Projects**: Prefer `io.github.<username>.<ProjectName>` when the upstream project does not already define a canonical reverse-DNS application ID.
-- **Canonical Upstream IDs Win**: If the upstream source tree already defines a clear canonical reverse-DNS app ID (for example in desktop metadata, AppStream, GTK/Tauri/Electron app IDs, or build config), reuse that canonical ID instead of renaming it to `io.github.*`.
-- **Consistency**: App ID, metadata filename, XML ID, and Desktop filename MUST be identical.
+- **Reverse-DNS Required**: Use a valid reverse-DNS application ID that follows Flatpak/D-Bus naming rules.
+- **Final Segment Must Name the App**: The final component should identify the specific software/project, not a generic platform or packaging label.
+- **Avoid Weak Trailing Segments**: Do not choose IDs ending in generic tails such as `.desktop`, `.Desktop`, `.app`, or `.linux` for normal applications.
+- **Repetition Is Acceptable**: If the cleanest valid ID repeats the app name in the last segment, that is acceptable and preferred over a weak generic ending (for example, `io.github.foo.foo` is better than `io.github.foo`).
+- **Canonical Upstream IDs Win Only If They Are Good IDs**: Reuse the upstream reverse-DNS ID when upstream already defines a good canonical ID. If the upstream ID uses a weak generic trailing segment, normalize it to a stronger app-identifying final segment instead of preserving it blindly.
+- **GitHub Projects**: When upstream does not already define a good canonical reverse-DNS application ID, prefer `io.github.<username>.<appname>` or another namespace the project actually controls.
+- **Consistency**: App ID, package directory name, manifest filename, metadata filename, XML `<id>`, desktop ID, icon ID, and any WM class tied to the Flatpak identity MUST be identical.
 
 ## 4. Core Workflow
 1. **Source Analysis & Research (PRIORITY)**:
@@ -95,6 +100,11 @@ Always check for the latest stable, non-EOL runtimes before creating or updating
       - List recent runs if the latest one is ambiguous:
         - `gh run list --limit 5 --json databaseId,headSha,status,conclusion,workflowName,createdAt`
     - Use `gh run watch <RUN_ID> --exit-status --interval 20` as the default blocking wait command after push.
+    - **Do not claim you are “watching”, “monitoring”, or “still following” a run unless you have either (a) an active blocking `gh run watch` in progress, or (b) you just performed a fresh `gh run view` / `gh run list` check in this turn.**
+    - **If the user sends any follow-up while a remote build may still be running or may have finished meanwhile, re-query GitHub Actions immediately before answering.** Never answer from memory or from an earlier status snapshot.
+    - A status report about a run must be based on a fresh remote check from the current turn. If enough time has passed that the run could have changed state, check again first.
+    - If `gh run watch` exits unexpectedly, fails to stream, or is interrupted by unrelated workflow/job noise, immediately fall back to `gh run view <RUN_ID> --json status,conclusion,jobs` and continue from the fresh result instead of assuming the previous state still holds.
+    - Do not pause at “run in progress” summaries when the workflow instruction is to continue until success; keep cycling through: query latest run → inspect failed job log if any → patch → commit → push → re-check.
     - If the workflow fans out into matrix jobs, identify the specific job IDs from `gh run view <RUN_ID> --json jobs` before fetching logs.
     - **Verification & Run (CRITICAL)**: Install and run the app. Task is ONLY finished when UI is visible.
     - Before handing off to CI, run local validation that matches the change scope whenever possible (for example: `flatpak-builder --show-manifest` or `appstreamcli validate`).
