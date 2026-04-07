@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
-  <id>dev.limux.linux</id>
-  <launchable type="desktop-id">dev.limux.linux.desktop</launchable>
+  <id>dev.limux.limux</id>
+  <launchable type="desktop-id">dev.limux.limux.desktop</launchable>
   <name>Limux</name>
   <summary>GPU-accelerated terminal workspace manager for Linux</summary>
   <metadata_license>CC0-1.0</metadata_license>

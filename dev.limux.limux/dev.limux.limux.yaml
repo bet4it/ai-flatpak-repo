@@ -1,4 +1,4 @@
-app-id: dev.limux.linux
+app-id: dev.limux.limux
 runtime: org.gnome.Platform
 runtime-version: '50'
 sdk: org.gnome.Sdk
@@ -54,9 +54,9 @@ modules:
         zig build -Dapp-runtime=gtk -Dflatpak=true -Doptimize=ReleaseFast -fno-sys=gtk4-layer-shell
       - cargo build --release --manifest-path Cargo.toml
       - install -Dm755 target/release/limux /app/bin/limux
-      - install -Dm644 dev.limux.linux.desktop /app/share/applications/dev.limux.linux.desktop
-      - install -Dm644 dev.limux.linux.metainfo.xml /app/share/metainfo/dev.limux.linux.metainfo.xml
-      - install -Dm644 icon.png /app/share/icons/hicolor/512x512/apps/dev.limux.linux.png
+      - install -Dm644 dev.limux.limux.desktop /app/share/applications/dev.limux.limux.desktop
+      - install -Dm644 dev.limux.limux.metainfo.xml /app/share/metainfo/dev.limux.limux.metainfo.xml
+      - install -Dm644 icon.png /app/share/icons/hicolor/512x512/apps/dev.limux.limux.png
       - |
         set -e
         GHOSTTY_SHARE_DIR=""
@@ -102,8 +102,8 @@ modules:
         commit: 81ab8ffa90185221782baf785e85387321e16f8d
         dest: ghostty
       - type: file
-        path: dev.limux.linux.desktop
+        path: dev.limux.limux.desktop
       - type: file
-        path: dev.limux.linux.metainfo.xml
+        path: dev.limux.limux.metainfo.xml
       - type: file
         path: icon.png
