@@ -1,8 +1,8 @@
 ---
-name: flatpak-repo-manager
+name: flatpak-repo-workflow
 description: Manage, package, and deploy Flatpak applications to a personal repository using GitHub Actions.
 ---
-# Flatpak Repository Manager
+# Flatpak Repository Workflow
 
 ## 1. Runtime Version Detection (CRITICAL)
 Always check for the latest stable, non-EOL runtimes before creating or updating a manifest.
@@ -33,6 +33,19 @@ Always check for the latest stable, non-EOL runtimes before creating or updating
    - Use **strictly non-interactive** polling.
    - `sleep 10` after push, get Run ID via `gh run list --limit 1 --json databaseId`.
    - Poll status via `gh run view <ID> --json status,conclusion`.
+   - Preferred commands:
+     - Get latest run for current push:
+       - `sleep 10 && gh run list --limit 1 --json databaseId,headSha,status,conclusion,workflowName`
+     - Watch a run until it finishes:
+       - `gh run watch <RUN_ID> --exit-status --interval 20`
+     - Check overall status without streaming:
+       - `gh run view <RUN_ID> --json status,conclusion,jobs`
+     - Inspect a specific job:
+       - `gh run view <RUN_ID> --job <JOB_ID> --log`
+     - List recent runs if the latest one is ambiguous:
+       - `gh run list --limit 5 --json databaseId,headSha,status,conclusion,workflowName,createdAt`
+   - Use `gh run watch <RUN_ID> --exit-status --interval 20` as the default blocking wait command after push.
+   - If the workflow fans out into matrix jobs, identify the specific job IDs from `gh run view <RUN_ID> --json jobs` before fetching logs.
    - **Verification & Run (CRITICAL)**: Install and run the app. Task is ONLY finished when UI is visible.
 5. **Knowledge Capture (CRITICAL)**:
    - Extract "gotchas" and update `references/` or `SKILL.md`. Every lesson learned from Flathub MUST be documented.
