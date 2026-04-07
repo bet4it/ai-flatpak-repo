@@ -62,6 +62,7 @@ modules:
       - type: git
         url: https://github.com/am-will/limux.git
         commit: 7fd02c98568e496ccfc91e2aa410be4a59557005
+        disable-submodules: true
       - type: git
         url: https://github.com/am-will/ghostty.git
         commit: 81ab8ffa90185221782baf785e85387321e16f8d
