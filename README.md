@@ -64,5 +64,5 @@ flatpak update
 
 ## Contribution
 
-Refer to the workspace skill in `.gemini/skills/flatpak-repo-manager/` for
+Refer to the workspace skill in `flatpak-repo-workflow/` for
 packaging standards and workflows.
