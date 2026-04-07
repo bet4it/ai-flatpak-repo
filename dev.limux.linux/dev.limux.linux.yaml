@@ -1,0 +1,74 @@
+app-id: dev.limux.linux
+runtime: org.gnome.Platform
+runtime-version: '50'
+sdk: org.gnome.Sdk
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.rust-stable
+command: limux
+finish-args:
+  - --share=ipc
+  - --share=network
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --device=dri
+  - --filesystem=home
+  - --talk-name=org.freedesktop.Notifications
+build-options:
+  append-path: /usr/lib/sdk/rust-stable/bin:/app/bin
+  env:
+    CARGO_HOME: /run/build/limux/cargo
+    XDG_CACHE_HOME: /run/build/limux/cache
+    CARGO_NET_GIT_FETCH_WITH_CLI: 'true'
+
+modules:
+  - name: zig
+    buildsystem: simple
+    build-commands:
+      - install -d /app/zig /app/bin
+      - cp -a ./* /app/zig/
+      - ln -sf /app/zig/zig /app/bin/zig
+    sources:
+      - type: archive
+        url: https://ziglang.org/download/0.15.2/zig-x86_64-linux-0.15.2.tar.xz
+        sha256: 02aa270f183da276e5b5920b1dac44a63f1a49e55050ebde3aecc9eb82f93239
+        strip-components: 1
+        only-arches:
+          - x86_64
+
+  - name: limux
+    buildsystem: simple
+    build-options:
+      build-args:
+        - --share=network
+    build-commands:
+      - |
+        set -e
+        export PATH="/app/bin:/usr/lib/sdk/rust-stable/bin:$PATH"
+        cd ghostty
+        zig build -Dapp-runtime=none -Doptimize=ReleaseFast
+      - cargo build --release --manifest-path Cargo.toml
+      - install -Dm755 target/release/limux /app/bin/limux
+      - install -Dm644 dev.limux.linux.desktop /app/share/applications/dev.limux.linux.desktop
+      - install -Dm644 dev.limux.linux.metainfo.xml /app/share/metainfo/dev.limux.linux.metainfo.xml
+      - install -Dm644 icon.png /app/share/icons/hicolor/512x512/apps/dev.limux.linux.png
+      - install -Dm644 ghostty/zig-out/lib/libghostty.so /app/lib/libghostty.so
+      - install -Dm644 ghostty/zig-out/share/terminfo/g/ghostty /app/share/limux/terminfo/g/ghostty
+      - install -Dm644 ghostty/zig-out/share/terminfo/x/xterm-ghostty /app/share/limux/terminfo/x/xterm-ghostty
+      - install -Dm644 rust/limux-host-linux/icons/limux-globe-symbolic.svg /app/share/icons/hicolor/scalable/actions/limux-globe-symbolic.svg
+      - install -Dm644 rust/limux-host-linux/icons/limux-split-horizontal-symbolic.svg /app/share/icons/hicolor/scalable/actions/limux-split-horizontal-symbolic.svg
+      - install -Dm644 rust/limux-host-linux/icons/limux-split-vertical-symbolic.svg /app/share/icons/hicolor/scalable/actions/limux-split-vertical-symbolic.svg
+      - cp -a ghostty/zig-out/share/ghostty /app/share/limux/ghostty
+    sources:
+      - type: git
+        url: https://github.com/am-will/limux.git
+        commit: 7fd02c98568e496ccfc91e2aa410be4a59557005
+      - type: git
+        url: https://github.com/am-will/ghostty.git
+        commit: 81ab8ffa90185221782baf785e85387321e16f8d
+        dest: ghostty
+      - type: file
+        path: dev.limux.linux.desktop
+      - type: file
+        path: dev.limux.linux.metainfo.xml
+      - type: file
+        path: icon.png

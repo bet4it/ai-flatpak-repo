@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>dev.limux.linux</id>
+  <launchable type="desktop-id">dev.limux.linux.desktop</launchable>
+  <name>Limux</name>
+  <summary>GPU-accelerated terminal workspace manager for Linux</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+  <content_rating type="oars-1.1" />
+  <developer id="dev.limux">
+    <name>Will R</name>
+  </developer>
+  <url type="homepage">https://github.com/am-will/limux</url>
+  <url type="bugtracker">https://github.com/am-will/limux/issues</url>
+  <description>
+    <p>
+      Limux is a native Linux terminal workspace manager built with GTK4,
+      libadwaita, WebKitGTK, and Ghostty's GPU-rendered terminal engine.
+      It combines split panes, tabbed terminals, persistent workspaces,
+      and an integrated browser in one desktop app.
+    </p>
+  </description>
+  <recommends>
+    <control>keyboard</control>
+    <control>pointing</control>
+  </recommends>
+  <releases>
+    <release version="0.1.12" date="2026-04-03" />
+  </releases>
+</component>
