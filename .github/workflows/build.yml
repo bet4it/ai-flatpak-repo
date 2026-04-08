@@ -32,7 +32,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          mapfile -t ALL_APPS < <(python3 -c '
+          mapfile -t ALL_APPS < <(python3 -c 'import textwrap; exec(textwrap.dedent("""
             import pathlib
             import re
 
@@ -58,7 +58,7 @@ jobs:
 
             for app in apps:
                 print(app)
-          ')
+          """))')
 
           ALL_JSON=$(printf '%s\n' "${ALL_APPS[@]}" | jq -R . | jq -sc 'map(select(length > 0))')
           MATRIX_JSON='[]'
@@ -76,7 +76,7 @@ jobs:
               if printf '%s\n' "$CHANGED_FILES" | grep -Eq '^(shared-modules(/|$)|\.gitmodules$|\.github/workflows/build\.yml$)'; then
                 MATRIX_JSON="$ALL_JSON"
               else
-                CHANGED_APP_JSON=$(printf '%s\n' "$CHANGED_FILES" | python3 -c '
+                CHANGED_APP_JSON=$(printf '%s\n' "$CHANGED_FILES" | python3 -c 'import textwrap; exec(textwrap.dedent("""
                   import json
                   import pathlib
                   import sys
@@ -95,14 +95,14 @@ jobs:
                           app_dirs.add(first)
 
                   print(json.dumps(sorted(app_dirs)))
-                ')
+                """))')
 
                 MATRIX_JSON=$(jq -cn --argjson apps "$ALL_JSON" --argjson changed "$CHANGED_APP_JSON" '
                   [ $apps[] | select(. as $app | $changed | index($app)) ]
                 ')
               fi
 
-              REMOVED_JSON=$(git diff --name-status --find-renames "$BEFORE" "${{ github.sha }}" | python3 -c '
+              REMOVED_JSON=$(git diff --name-status --find-renames "$BEFORE" "${{ github.sha }}" | python3 -c 'import textwrap; exec(textwrap.dedent("""
                 import json
                 import sys
 
@@ -127,7 +127,7 @@ jobs:
                         removed.add(first)
 
                 print(json.dumps(sorted(removed)))
-              ')
+              """))')
             fi
           fi
 
