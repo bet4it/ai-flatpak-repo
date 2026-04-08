@@ -11,7 +11,7 @@
   <launchable type="desktop-id">io.github.id_root.Synapse.desktop</launchable>
   <url type="homepage">https://github.com/id-root/Synapse</url>
   <releases>
-    <release version="1.0" date="2026-04-01" />
+    <release version="1.2.1" date="2026-04-05" />
   </releases>
   <content_rating type="oars-1.1" />
 </component>
