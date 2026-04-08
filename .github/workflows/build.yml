@@ -257,6 +257,7 @@ jobs:
             ostree --repo=repo refs --delete "runtime/$app_id.Debug" || true
           done
 
+          mkdir -p repo/refs/remotes
           find bundles/ -name "*.flatpak" -print0 | xargs -0 -r -I {} sh -c 'echo "Importing {}..."; flatpak build-import-bundle repo "{}"'
           flatpak build-update-repo --generate-static-deltas --prune repo
 
