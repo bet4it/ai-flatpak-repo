@@ -223,6 +223,11 @@ jobs:
             ls -R bundles/
           fi
 
+          if [ -d repo/final-repo ]; then
+            cp -a repo/final-repo/. repo/
+            rm -rf repo/final-repo
+          fi
+
           touch repo/.nojekyll
 
           if [ ! -f repo/config ]; then
