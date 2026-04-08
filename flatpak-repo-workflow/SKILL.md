@@ -117,7 +117,10 @@ Always check for the latest stable, non-EOL runtimes before creating or updating
     - Before handing off to CI, run local validation that matches the change scope whenever possible (for example: `flatpak-builder --show-manifest` or `appstreamcli validate`).
     - The authoritative Flatpak build for this repository happens in GitHub Actions. Treat local checks as preflight only.
 5. **Knowledge Capture (CRITICAL)**:
-    - Extract "gotchas" and update `references/` or `SKILL.md`. Every lesson learned from Flathub MUST be documented.
+    - Extract "gotchas" and document them in the **most specific matching long-term home**: stack-specific details go in the matching file under `references/` (for example: Node/Electron details in `references/nodejs.md`, Tauri details in `references/tauri.md`, Wails details in `references/wails.md`), while cross-stack Flatpak workflow/export/asset rules stay in `SKILL.md`.
+    - Keep `SKILL.md` focused on workflow policy, repository-wide rules, and cross-stack execution discipline. Do **not** leave stack-specific implementation gotchas in `SKILL.md` when they belong in a matching technology reference, and do **not** move generic Flatpak rules into a stack-specific reference just because they were discovered while packaging one app.
+    - If a new lesson does not fit any existing reference file, either add it to the closest matching reference or create a new reference file, then link it from Section 6.
+    - Every lesson learned from Flathub MUST be documented in the correct long-term home, not left only in an ad-hoc workflow note.
 
 ## 5. Response Discipline For Packaging Requests
 - When the workflow trigger in Section 0 matches, the response should communicate progress in terms of execution phases: preflight, upstream inspection, manifest authoring, validation, blockers.
@@ -130,11 +133,6 @@ Always check for the latest stable, non-EOL runtimes before creating or updating
 - **Node.js/Electron**: See [references/nodejs.md](references/nodejs.md).
 - **Wails (Go + Frontend)**: See [references/wails.md](references/wails.md).
 - **Tauri (Rust + Node.js)**: See [references/tauri.md](references/tauri.md).
-
-### Node.js / Electron Gotchas Seen In This Repo
-- For Bun/Electron apps with native modules (`node-pty`, `better-sqlite3`, `@parcel/watcher`, `bufferutil`, `utf-8-validate`, etc.), do not assume the Flatpak builder image already exposes every rebuild tool. If CI shows `node-gyp: command not found`, add an explicit manifest module that installs `node-gyp` into `/app/bin` before the app build.
-- Do not rely on `node-gyp` downloading Node headers during the Flatpak build for native rebuilds. In this repository, the safer pattern is to vendor the exact Node headers tarball as a manifest source, unpack it under `/app/etc/node-headers`, and point rebuilds at it with `npm_config_nodedir`.
-- The reason for vendoring headers is not just reproducibility: CI may fail while extracting downloaded headers with tar ownership operations (`fchown` / `TAR_ENTRY_ERROR EINVAL`). Pre-unpacking headers as a manifest module avoids that entire failure mode.
 
 ## 7. Deployment Standard
 - **Submodules**: Use `git submodule add https://github.com/flathub/shared-modules.git` to manage common library definitions. Reference them in manifests as `../shared-modules/path/to/module.json`.
