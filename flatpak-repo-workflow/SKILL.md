@@ -86,6 +86,9 @@ Always check for the latest stable, non-EOL runtimes before creating or updating
     - Keep filenames, XML `<id>`, desktop ID, and manifest `app-id` identical.
     - If upstream does not ship a desktop file, metainfo, or icon, create repository-owned metadata/assets using upstream branding and document the source.
     - If installing a raster icon into a fixed hicolor size directory such as `512x512/apps`, the actual image must not exceed that directory size. Do not place a `1024x1024` PNG into `512x512/apps` and assume export will downscale it.
+    - For app-owned state (local databases, UI state, daemon sockets, PID files, tokens, caches, etc.), prefer Flatpak/XDG per-app directories such as `$XDG_DATA_HOME`, `$XDG_CONFIG_HOME`, `$XDG_CACHE_HOME`, or `$XDG_RUNTIME_DIR/app/$FLATPAK_ID` instead of sharing `~/.foo` state with a non-Flatpak installation.
+    - If upstream hardcodes a host home dot-directory like `~/.foo`, a wrapper-level environment override (for example setting an app-specific home/state variable to the Flatpak XDG path) is an acceptable packaging fix when it avoids collisions with host-installed copies of the same app.
+    - Sharing persistent app state with non-Flatpak installs should be treated as opt-in compatibility behavior, not the default. If you keep it shared, document the reason explicitly.
     - Lock the manifest source to an exact release tag or commit; never leave it floating.
     - The manifest must compile/build the application from source during `flatpak-builder`; do not install upstream prebuilt binaries.
 3. **Commit & Push**: Push changes to repository.
