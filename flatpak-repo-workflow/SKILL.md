@@ -85,6 +85,7 @@ Always check for the latest stable, non-EOL runtimes before creating or updating
     - Prefer `.metainfo.xml` for new work.
     - Keep filenames, XML `<id>`, desktop ID, and manifest `app-id` identical.
     - If upstream does not ship a desktop file, metainfo, or icon, create repository-owned metadata/assets using upstream branding and document the source.
+    - If installing a raster icon into a fixed hicolor size directory such as `512x512/apps`, the actual image must not exceed that directory size. Do not place a `1024x1024` PNG into `512x512/apps` and assume export will downscale it.
     - Lock the manifest source to an exact release tag or commit; never leave it floating.
     - The manifest must compile/build the application from source during `flatpak-builder`; do not install upstream prebuilt binaries.
 3. **Commit & Push**: Push changes to repository.
@@ -129,6 +130,11 @@ Always check for the latest stable, non-EOL runtimes before creating or updating
 - **Node.js/Electron**: See [references/nodejs.md](references/nodejs.md).
 - **Wails (Go + Frontend)**: See [references/wails.md](references/wails.md).
 - **Tauri (Rust + Node.js)**: See [references/tauri.md](references/tauri.md).
+
+### Node.js / Electron Gotchas Seen In This Repo
+- For Bun/Electron apps with native modules (`node-pty`, `better-sqlite3`, `@parcel/watcher`, `bufferutil`, `utf-8-validate`, etc.), do not assume the Flatpak builder image already exposes every rebuild tool. If CI shows `node-gyp: command not found`, add an explicit manifest module that installs `node-gyp` into `/app/bin` before the app build.
+- Do not rely on `node-gyp` downloading Node headers during the Flatpak build for native rebuilds. In this repository, the safer pattern is to vendor the exact Node headers tarball as a manifest source, unpack it under `/app/etc/node-headers`, and point rebuilds at it with `npm_config_nodedir`.
+- The reason for vendoring headers is not just reproducibility: CI may fail while extracting downloaded headers with tar ownership operations (`fchown` / `TAR_ENTRY_ERROR EINVAL`). Pre-unpacking headers as a manifest module avoids that entire failure mode.
 
 ## 7. Deployment Standard
 - **Submodules**: Use `git submodule add https://github.com/flathub/shared-modules.git` to manage common library definitions. Reference them in manifests as `../shared-modules/path/to/module.json`.
