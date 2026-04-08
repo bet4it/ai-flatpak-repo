@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Superset
+Exec=superset
+Terminal=false
+Type=Application
+Icon=sh.superset.Superset
+Categories=Development;
+Comment=The code editor for AI agents

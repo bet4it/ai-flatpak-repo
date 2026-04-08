@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>sh.superset.Superset</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>Elastic-2.0</project_license>
+  <name>Superset</name>
+  <summary>The code editor for AI agents</summary>
+  <description>
+    <p>Superset is a desktop application for orchestrating multiple CLI coding agents across isolated git worktrees. It combines integrated terminals, review tools, diff viewing, editor handoff, and workspace management in one interface.</p>
+    <p>This Flatpak packages the upstream Electron desktop app from source and uses host command bridges so common developer tools such as git, gh, shells, and external editors can still be reached from the sandbox.</p>
+  </description>
+  <launchable type="desktop-id">sh.superset.Superset.desktop</launchable>
+  <url type="homepage">https://superset.sh</url>
+  <url type="bugtracker">https://github.com/superset-sh/superset/issues</url>
+  <url type="vcs-browser">https://github.com/superset-sh/superset</url>
+  <releases>
+    <release version="1.4.7" date="2026-04-03" />
+  </releases>
+  <content_rating type="oars-1.1" />
+</component>
