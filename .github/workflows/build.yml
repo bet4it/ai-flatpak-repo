@@ -4,6 +4,12 @@ on:
   push:
     branches: [ main ]
   workflow_dispatch:
+    inputs:
+      full_rebuild:
+        description: Build all apps instead of only changed apps
+        required: false
+        default: true
+        type: boolean
 
 permissions:
   contents: write
@@ -16,16 +22,131 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
+      should_run: ${{ steps.set-matrix.outputs.should_run }}
+      removed_app_ids: ${{ steps.set-matrix.outputs.removed_app_ids }}
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
       - id: set-matrix
         run: |
-          DIRS=$(find . -maxdepth 2 -not -path '*/.*' -name "*.yaml" | xargs -I {} dirname {} | sed 's|^\./||' | sort -u | jq -R . | jq -s -c .)
-          echo "matrix=$DIRS" >> $GITHUB_OUTPUT
+          set -euo pipefail
+
+          mapfile -t ALL_APPS < <(
+            python3 <<'PY'
+              import pathlib
+              import re
+
+              root = pathlib.Path('.')
+              pattern = re.compile(r'^app-id:\s*(\S+)\s*$')
+              apps = []
+
+              for manifest in sorted(root.glob('*/*.yaml')):
+                  app_dir = manifest.parent.name
+                  if manifest.name != f'{app_dir}.yaml':
+                      continue
+
+                  app_id = None
+                  with manifest.open('r', encoding='utf-8') as fh:
+                      for line in fh:
+                          match = pattern.match(line)
+                          if match:
+                              app_id = match.group(1)
+                              break
+
+                  if app_id == app_dir:
+                      apps.append(app_id)
+
+              for app in apps:
+                  print(app)
+            PY
+          )
+
+          ALL_JSON=$(printf '%s\n' "${ALL_APPS[@]}" | jq -R . | jq -sc 'map(select(length > 0))')
+          MATRIX_JSON='[]'
+          REMOVED_JSON='[]'
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.full_rebuild }}" = "true" ]; then
+            MATRIX_JSON="$ALL_JSON"
+          else
+            BEFORE="${{ github.event.before }}"
+            if [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+              MATRIX_JSON="$ALL_JSON"
+            else
+              CHANGED_FILES=$(git diff --name-only "$BEFORE" "${{ github.sha }}")
+
+              if printf '%s\n' "$CHANGED_FILES" | grep -Eq '^(shared-modules(/|$)|\.gitmodules$|\.github/workflows/build\.yml$)'; then
+                MATRIX_JSON="$ALL_JSON"
+              else
+                CHANGED_APP_JSON=$(printf '%s\n' "$CHANGED_FILES" | python3 -c '
+                  import json
+                  import pathlib
+                  import sys
+
+                  repo = pathlib.Path(".")
+                  app_dirs = set()
+                  for line in sys.stdin:
+                      path = line.strip()
+                      if not path:
+                          continue
+                      first = path.split("/", 1)[0]
+                      if not first or first.startswith("."):
+                          continue
+                      manifest = repo / first / f"{first}.yaml"
+                      if manifest.is_file():
+                          app_dirs.add(first)
+
+                  print(json.dumps(sorted(app_dirs)))
+                ')
+
+                MATRIX_JSON=$(jq -cn --argjson apps "$ALL_JSON" --argjson changed "$CHANGED_APP_JSON" '
+                  [ $apps[] | select(. as $app | $changed | index($app)) ]
+                ')
+              fi
+
+              REMOVED_JSON=$(git diff --name-status --find-renames "$BEFORE" "${{ github.sha }}" | python3 -c '
+                import json
+                import sys
+
+                removed = set()
+                for raw in sys.stdin:
+                    line = raw.rstrip("\n")
+                    if not line:
+                        continue
+                    parts = line.split("\t")
+                    status = parts[0]
+                    old_path = None
+                    if status.startswith("D") and len(parts) >= 2:
+                        old_path = parts[1]
+                    elif status.startswith("R") and len(parts) >= 3:
+                        old_path = parts[1]
+
+                    if not old_path:
+                        continue
+
+                    first = old_path.split("/", 1)[0]
+                    if old_path == f"{first}/{first}.yaml":
+                        removed.add(first)
+
+                print(json.dumps(sorted(removed)))
+              ')
+            fi
+          fi
+
+          if [ "$MATRIX_JSON" != '[]' ] || [ "$REMOVED_JSON" != '[]' ]; then
+            SHOULD_RUN=true
+          else
+            SHOULD_RUN=false
+          fi
+
+          echo "matrix=$MATRIX_JSON" >> "$GITHUB_OUTPUT"
+          echo "removed_app_ids=$REMOVED_JSON" >> "$GITHUB_OUTPUT"
+          echo "should_run=$SHOULD_RUN" >> "$GITHUB_OUTPUT"
 
   build:
     name: Build Flatpak
     needs: discover
+    if: ${{ needs.discover.outputs.matrix != '[]' }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -49,28 +170,49 @@ jobs:
 
   reconstruct:
     name: Reconstruct Repository
-    needs: build
+    needs: [discover, build]
+    if: ${{ needs.discover.outputs.should_run == 'true' && (needs.build.result == 'success' || needs.build.result == 'skipped') }}
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/flathub-infra/flatpak-github-actions:freedesktop-25.08
       options: --privileged
     steps:
       - name: Download All Bundles
+        if: ${{ needs.discover.outputs.matrix != '[]' }}
         uses: actions/download-artifact@v4
         with:
           path: bundles
           merge-multiple: true
+          if-no-files-found: ignore
 
       - name: Initialize and Import
         run: |
-          ls -R bundles/
-          mkdir -p repo
+          set -euo pipefail
+
+          mkdir -p bundles repo
+          if [ -d bundles ]; then
+            ls -R bundles/
+          fi
+
           ostree init --repo=repo --mode=archive-z2
+          mkdir -p repo
           touch repo/.nojekyll
-          # Search recursively for .flatpak files
-          find bundles/ -name "*.flatpak" -print0 | xargs -0 -I {} sh -c 'echo "Importing {}..."; flatpak build-import-bundle repo "{}"'
-          # Use modern flatpak to update repo with appstream metadata
-          flatpak build-update-repo --generate-static-deltas repo
+
+          if curl -fsI https://bet4it.github.io/ai-flatpak-repo/summary >/dev/null; then
+            ostree --repo=repo remote add --if-not-exists --no-gpg-verify published https://bet4it.github.io/ai-flatpak-repo/
+            ostree --repo=repo pull --mirror published
+            ostree --repo=repo remote delete --if-exists published
+          fi
+
+          REMOVED_APP_IDS='${{ needs.discover.outputs.removed_app_ids }}'
+          jq -r '.[]' <<<"$REMOVED_APP_IDS" | while IFS= read -r app_id; do
+            [ -n "$app_id" ] || continue
+            ostree --repo=repo refs --delete "app/$app_id" || true
+            ostree --repo=repo refs --delete "runtime/$app_id.Debug" || true
+          done
+
+          find bundles/ -name "*.flatpak" -print0 | xargs -0 -r -I {} sh -c 'echo "Importing {}..."; flatpak build-import-bundle repo "{}"'
+          flatpak build-update-repo --generate-static-deltas --prune repo
 
       - name: Upload Final Repo
         uses: actions/upload-artifact@v4
@@ -81,6 +223,7 @@ jobs:
   deploy:
     name: Deploy to GitHub Pages
     needs: reconstruct
+    if: ${{ needs.discover.outputs.should_run == 'true' }}
     runs-on: ubuntu-latest
     environment:
       name: github-pages
