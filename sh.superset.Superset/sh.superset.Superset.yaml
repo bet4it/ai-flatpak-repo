@@ -27,6 +27,7 @@ build-options:
   env:
     XDG_CACHE_HOME: /run/build/superset/cache
     npm_config_cache: /run/build/superset/npm-cache
+    npm_config_nodedir: /app/etc/node-headers
     BUN_INSTALL_CACHE_DIR: /run/build/superset/bun-cache
     ELECTRON_BUILDER_CACHE: /run/build/superset/electron-builder-cache
     CI: '1'
@@ -52,6 +53,16 @@ modules:
       - type: shell
         commands:
           - echo "Installing node-gyp for native Electron modules..."
+
+  - name: node-headers
+    buildsystem: simple
+    build-commands:
+      - mkdir -p /app/etc/node-headers
+      - tar -xf node-v24.14.1-headers.tar.gz -C /app/etc/node-headers --strip-components=1 --no-same-owner
+    sources:
+      - type: file
+        url: https://nodejs.org/dist/v24.14.1/node-v24.14.1-headers.tar.gz
+        sha256: 282103054f841fe75ecbbfdd8bb7334d0a4bb693191d97c5770ac6ae9acdd4ff
 
   - name: superset
     buildsystem: simple
