@@ -1,0 +1,93 @@
+app-id: sh.superset.Superset
+runtime: org.freedesktop.Platform
+runtime-version: '25.08'
+sdk: org.freedesktop.Sdk
+base: org.electronjs.Electron2.BaseApp
+base-version: '25.08'
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.node24
+command: superset
+separate-locales: false
+finish-args:
+  - --share=network
+  - --share=ipc
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --socket=pulseaudio
+  - --socket=ssh-auth
+  - --device=dri
+  - --allow=devel
+  - --filesystem=host
+  - --talk-name=org.freedesktop.Notifications
+  - --talk-name=org.freedesktop.Flatpak
+  - --env=XCURSOR_PATH=/run/host/user-share/icons:/run/host/share/icons
+
+build-options:
+  append-path: /usr/lib/sdk/node24/bin:/app/bin
+  env:
+    XDG_CACHE_HOME: /run/build/superset/cache
+    npm_config_cache: /run/build/superset/npm-cache
+    BUN_INSTALL_CACHE_DIR: /run/build/superset/bun-cache
+    ELECTRON_BUILDER_CACHE: /run/build/superset/electron-builder-cache
+    CI: '1'
+
+modules:
+  - name: bun
+    buildsystem: simple
+    build-commands:
+      - install -Dm755 bun /app/bin/bun
+    sources:
+      - type: archive
+        url: https://github.com/oven-sh/bun/releases/download/bun-v1.3.11/bun-linux-x64.zip
+        sha256: 8611ba935af886f05a6f38740a15160326c15e5d5d07adef966130b4493607ed
+
+  - name: superset
+    buildsystem: simple
+    build-options:
+      build-args:
+        - --share=network
+    build-commands:
+      - |
+        set -eux
+        bun install --frozen-lockfile
+        bun run --filter=@superset/desktop install:deps
+        cd apps/desktop
+        bun run clean:dev
+        bun run generate:icons
+        bun run compile:app
+        bun run package -- --linux dir --publish never
+        cd ../..
+
+        UNPACK_DIR="$(find apps/desktop/release -maxdepth 1 -type d -name '*linux*unpacked' | head -n 1)"
+        test -n "$UNPACK_DIR"
+
+        install -d /app/share/sh.superset.Superset
+        cp -a "$UNPACK_DIR"/. /app/share/sh.superset.Superset/
+
+        install -Dm755 superset.sh /app/bin/superset
+        install -Dm755 host-exec.sh /app/bin/host-tools/host-exec
+        install -Dm755 host-shell.sh /app/bin/host-tools/host-shell
+        for cmd in aplay bash bun claude code code-insiders codex cursor fish gemini gh git lsof node npm npx opencode paplay pnpm python python3 sh zsh; do
+          ln -sf host-exec /app/bin/host-tools/$cmd
+        done
+
+        install -Dm644 sh.superset.Superset.desktop /app/share/applications/sh.superset.Superset.desktop
+        install -Dm644 sh.superset.Superset.metainfo.xml /app/share/metainfo/sh.superset.Superset.metainfo.xml
+        install -Dm644 icon.png /app/share/icons/hicolor/512x512/apps/sh.superset.Superset.png
+    sources:
+      - type: git
+        url: https://github.com/superset-sh/superset.git
+        tag: desktop-v1.4.7
+        commit: 1e04070e139830b468911afb64e35b165b60bed9
+      - type: file
+        path: superset.sh
+      - type: file
+        path: host-exec.sh
+      - type: file
+        path: host-shell.sh
+      - type: file
+        path: sh.superset.Superset.desktop
+      - type: file
+        path: sh.superset.Superset.metainfo.xml
+      - type: file
+        path: icon.png
