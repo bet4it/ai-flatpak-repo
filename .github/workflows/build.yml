@@ -179,12 +179,14 @@ jobs:
           set -euo pipefail
 
           RUNS_API="https://api.github.com/repos/${{ github.repository }}/actions/workflows/build.yml/runs?status=success&per_page=10"
-          PREVIOUS_RUN_ID=$(curl -fsSL \
+          SUCCESS_RUN_IDS=$(curl -fsSL \
             -H "Authorization: Bearer $GH_TOKEN" \
             -H "Accept: application/vnd.github+json" \
-            "$RUNS_API" | jq -r '.workflow_runs[0].id // empty')
+            "$RUNS_API" | jq -r '.workflow_runs[]?.id // empty')
 
-          if [ -n "$PREVIOUS_RUN_ID" ]; then
+          while IFS= read -r PREVIOUS_RUN_ID; do
+            [ -n "$PREVIOUS_RUN_ID" ] || continue
+
             ARTIFACTS_API="https://api.github.com/repos/${{ github.repository }}/actions/runs/${PREVIOUS_RUN_ID}/artifacts"
             FINAL_REPO_ARTIFACT_ID=$(curl -fsSL \
               -H "Authorization: Bearer $GH_TOKEN" \
@@ -194,8 +196,9 @@ jobs:
             if [ -n "$FINAL_REPO_ARTIFACT_ID" ]; then
               echo "run_id=$PREVIOUS_RUN_ID" >> "$GITHUB_OUTPUT"
               echo "artifact_id=$FINAL_REPO_ARTIFACT_ID" >> "$GITHUB_OUTPUT"
+              break
             fi
-          fi
+          done <<< "$SUCCESS_RUN_IDS"
 
       - name: Download Previous Repo Seed
         if: ${{ steps.seed.outputs.artifact_id != '' }}
