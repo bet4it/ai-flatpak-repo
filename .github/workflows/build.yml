@@ -32,35 +32,30 @@ jobs:
         run: |
           set -euo pipefail
 
-          mapfile -t ALL_APPS < <(python3 -c 'import textwrap; exec(textwrap.dedent("""
-            import pathlib
-            import re
+          json_array() {
+            if [ "$#" -eq 0 ]; then
+              printf '[]'
+            else
+              printf '%s\n' "$@" | jq -R . | jq -sc 'map(select(length > 0))'
+            fi
+          }
 
-            root = pathlib.Path(".")
-            pattern = re.compile(r"^app-id:\s*(\S+)\s*$")
-            apps = []
+          declare -a ALL_APPS=()
+          for manifest in */*.yaml; do
+            [ -f "$manifest" ] || continue
 
-            for manifest in sorted(root.glob("*/*.yaml")):
-                app_dir = manifest.parent.name
-                if manifest.name != f"{app_dir}.yaml":
-                    continue
+            app_dir=${manifest%%/*}
+            manifest_name=${manifest##*/}
+            [ "$manifest_name" = "$app_dir.yaml" ] || continue
 
-                app_id = None
-                with manifest.open("r", encoding="utf-8") as fh:
-                    for line in fh:
-                        match = pattern.match(line)
-                        if match:
-                            app_id = match.group(1)
-                            break
+            app_id=$(grep -m1 -E '^app-id:[[:space:]]*' "$manifest" | cut -d: -f2- | xargs || true)
+            [ -n "$app_id" ] || continue
+            [ "$app_id" = "$app_dir" ] || continue
 
-                if app_id == app_dir:
-                    apps.append(app_id)
+            ALL_APPS+=("$app_id")
+          done
 
-            for app in apps:
-                print(app)
-          """))')
-
-          ALL_JSON=$(printf '%s\n' "${ALL_APPS[@]}" | jq -R . | jq -sc 'map(select(length > 0))')
+          ALL_JSON=$(json_array "${ALL_APPS[@]}")
           MATRIX_JSON='[]'
           REMOVED_JSON='[]'
 
@@ -76,58 +71,59 @@ jobs:
               if printf '%s\n' "$CHANGED_FILES" | grep -Eq '^(shared-modules(/|$)|\.gitmodules$|\.github/workflows/build\.yml$)'; then
                 MATRIX_JSON="$ALL_JSON"
               else
-                CHANGED_APP_JSON=$(printf '%s\n' "$CHANGED_FILES" | python3 -c 'import textwrap; exec(textwrap.dedent("""
-                  import json
-                  import pathlib
-                  import sys
+                declare -A CHANGED_APP_MAP=()
+                while IFS= read -r path; do
+                  [ -n "$path" ] || continue
 
-                  repo = pathlib.Path(".")
-                  app_dirs = set()
-                  for line in sys.stdin:
-                      path = line.strip()
-                      if not path:
-                          continue
-                      first = path.split("/", 1)[0]
-                      if not first or first.startswith("."):
-                          continue
-                      manifest = repo / first / f"{first}.yaml"
-                      if manifest.is_file():
-                          app_dirs.add(first)
+                  first=${path%%/*}
+                  [ -n "$first" ] || continue
+                  case "$first" in
+                    .*) continue ;;
+                  esac
 
-                  print(json.dumps(sorted(app_dirs)))
-                """))')
+                  manifest="$first/$first.yaml"
+                  if [ -f "$manifest" ]; then
+                    CHANGED_APP_MAP["$first"]=1
+                  fi
+                done <<< "$CHANGED_FILES"
 
-                MATRIX_JSON=$(jq -cn --argjson apps "$ALL_JSON" --argjson changed "$CHANGED_APP_JSON" '
-                  [ $apps[] | select(. as $app | $changed | index($app)) ]
-                ')
+                declare -a MATRIX_APPS=()
+                for app in "${ALL_APPS[@]}"; do
+                  if [ -n "${CHANGED_APP_MAP[$app]+x}" ]; then
+                    MATRIX_APPS+=("$app")
+                  fi
+                done
+
+                MATRIX_JSON=$(json_array "${MATRIX_APPS[@]}")
               fi
 
-              REMOVED_JSON=$(git diff --name-status --find-renames "$BEFORE" "${{ github.sha }}" | python3 -c 'import textwrap; exec(textwrap.dedent("""
-                import json
-                import sys
+              declare -A REMOVED_APP_MAP=()
+              while IFS=$'\t' read -r status first_path second_path; do
+                [ -n "$status" ] || continue
 
-                removed = set()
-                for raw in sys.stdin:
-                    line = raw.rstrip("\n")
-                    if not line:
-                        continue
-                    parts = line.split("\t")
-                    status = parts[0]
-                    old_path = None
-                    if status.startswith("D") and len(parts) >= 2:
-                        old_path = parts[1]
-                    elif status.startswith("R") and len(parts) >= 3:
-                        old_path = parts[1]
+                old_path=''
+                case "$status" in
+                  D*) old_path=$first_path ;;
+                  R*) old_path=$first_path ;;
+                  *) continue ;;
+                esac
 
-                    if not old_path:
-                        continue
+                [ -n "$old_path" ] || continue
 
-                    first = old_path.split("/", 1)[0]
-                    if old_path == f"{first}/{first}.yaml":
-                        removed.add(first)
+                first=${old_path%%/*}
+                if [ "$old_path" = "$first/$first.yaml" ]; then
+                  REMOVED_APP_MAP["$first"]=1
+                fi
+              done < <(git diff --name-status --find-renames "$BEFORE" "${{ github.sha }}")
 
-                print(json.dumps(sorted(removed)))
-              """))')
+              declare -a REMOVED_APPS=()
+              for app in "${!REMOVED_APP_MAP[@]}"; do
+                REMOVED_APPS+=("$app")
+              done
+              IFS=$'\n' REMOVED_APPS=($(sort <<<"${REMOVED_APPS[*]}"))
+              unset IFS
+
+              REMOVED_JSON=$(json_array "${REMOVED_APPS[@]}")
             fi
           fi
 
