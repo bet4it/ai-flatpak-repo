@@ -41,6 +41,18 @@ modules:
         url: https://github.com/oven-sh/bun/releases/download/bun-v1.3.11/bun-linux-x64.zip
         sha256: 8611ba935af886f05a6f38740a15160326c15e5d5d07adef966130b4493607ed
 
+  - name: node-gyp
+    buildsystem: simple
+    build-options:
+      build-args:
+        - --share=network
+    build-commands:
+      - npm install -g node-gyp --prefix=/app
+    sources:
+      - type: shell
+        commands:
+          - echo "Installing node-gyp for native Electron modules..."
+
   - name: superset
     buildsystem: simple
     build-options:
