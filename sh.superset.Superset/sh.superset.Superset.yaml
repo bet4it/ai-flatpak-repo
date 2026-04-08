@@ -90,7 +90,7 @@ modules:
         install -Dm755 superset.sh /app/bin/superset
         install -Dm755 host-exec.sh /app/bin/host-tools/host-exec
         install -Dm755 host-shell.sh /app/bin/host-tools/host-shell
-        for cmd in aplay bash bun claude code code-insiders codex cursor fish gemini gh git lsof node npm npx opencode paplay pnpm python python3 sh zsh; do
+        for cmd in aplay bash bun claude code code-insiders codex cursor fish gemini gh git lsof node npm npx opencode paplay pnpm python python3 sh xdg-mime xdg-open xdg-settings zsh; do
           ln -sf host-exec /app/bin/host-tools/$cmd
         done
 

@@ -5,8 +5,11 @@ APPDIR="/app/share/sh.superset.Superset"
 
 export PATH="/app/bin/host-tools:/app/bin:${PATH:-/usr/bin}"
 export SUPERSET_HOST_SHELL="${SHELL:-/bin/sh}"
+export SUPERSET_HOME_DIR="${SUPERSET_HOME_DIR:-${XDG_DATA_HOME:-${HOME}/.var/app/${FLATPAK_ID}/data}/.superset}"
 export SHELL="/app/bin/host-tools/host-shell"
 export TMPDIR="${XDG_RUNTIME_DIR:-/tmp}/app/${FLATPAK_ID}"
+
+mkdir -p "$SUPERSET_HOME_DIR" "$TMPDIR"
 
 for candidate in \
   "$APPDIR/Superset" \
