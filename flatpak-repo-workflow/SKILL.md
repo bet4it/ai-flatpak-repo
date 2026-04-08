@@ -32,6 +32,9 @@ Before writing any manifest, complete all of the following:
 ### Local vs CI Responsibility (MANDATORY)
 - This repository's Flatpak packaging workflow is **GitHub-Actions-first and GitHub-Actions-required**. For packaging requests in this repo, the real Flatpak build must be performed through the repository's GitHub Actions workflow.
 - For packaging requests in this repository, **creating the commit and pushing it so GitHub Actions can perform the real Flatpak build is part of the standard workflow and does not require a separate user approval step**.
+- Treat **"manifest/metadata ready but not committed/pushed" as an incomplete packaging task**. If the agent stops before commit/push, it has not followed this repository workflow.
+- Do **not** ask the user whether to commit, whether to push, or whether to trigger CI once packaging work is ready; in this repository those actions are the default handoff to the authoritative build system.
+- After pushing, the agent must immediately switch into GitHub Actions verification mode and fetch a **fresh** remote run status in the same workflow, rather than ending at "push succeeded".
 - Local work should focus on: upstream inspection, manifest authoring, metadata/icon preparation, checksum lookup from authoritative upstream metadata, and light validation such as `flatpak-builder --show-manifest` or `appstreamcli validate`.
 - Do **not** perform ad-hoc local Flatpak packaging builds as the primary build path for this repository unless the user explicitly asks for a local reproduction/debugging workflow.
 - Do **not** download large toolchain archives or upstream release artifacts locally just to prepare packaging work when that download is meant to support the real package build; encode those downloads as manifest sources so GitHub Actions fetches them inside `flatpak-builder`.
@@ -43,6 +46,8 @@ A packaging task is not complete unless the agent has attempted all applicable s
 - Created or updated the app directory named after the final app ID.
 - Added the manifest, desktop file, metainfo/appdata, and icon asset (or documented the exact missing upstream asset blocker).
 - Performed local validation relevant to the stack.
+- Created the repository commit that contains the packaging changes.
+- Pushed that commit so GitHub Actions can run the authoritative Flatpak build.
 - Reported concrete outcomes and blockers, not just findings.
 - Followed the GitHub Actions build through to a current remote result; do not treat a stale earlier status check as active monitoring.
 
@@ -84,6 +89,7 @@ Always check for the latest stable, non-EOL runtimes before creating or updating
     - The manifest must compile/build the application from source during `flatpak-builder`; do not install upstream prebuilt binaries.
 3. **Commit & Push**: Push changes to repository.
    - For packaging work in this repo, do **not** stop to ask whether to create a commit and push after the manifest/metadata work is ready; that commit/push is the handoff required to trigger the authoritative GitHub Actions Flatpak build.
+   - If multiple files were touched to complete one packaging request, the agent must still finish the commit/push flow in the same work session; do not hand off an uncommitted packaging tree as "done".
 4. **Monitor & Verify (MANDATORY)**:
     - Use **strictly non-interactive** polling.
     - `sleep 10` after push, get Run ID via `gh run list --limit 1 --json databaseId`.
@@ -115,6 +121,7 @@ Always check for the latest stable, non-EOL runtimes before creating or updating
 ## 5. Response Discipline For Packaging Requests
 - When the workflow trigger in Section 0 matches, the response should communicate progress in terms of execution phases: preflight, upstream inspection, manifest authoring, validation, blockers.
 - Do not present exploratory research as the final result when no manifest/metadata changes were made.
+- Do not present "I prepared the files" as the final result when commit/push/CI follow-through is still missing; for this repository that is only a mid-work update.
 - If blocked, report the exact missing asset, dependency, runtime issue, or upstream incompatibility and continue with any remaining non-blocked apps in the same request.
 - If the user asks to "continue", resume the next pending workflow step rather than re-explaining prior research.
 
