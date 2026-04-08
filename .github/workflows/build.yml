@@ -32,35 +32,33 @@ jobs:
         run: |
           set -euo pipefail
 
-          mapfile -t ALL_APPS < <(
-            python3 <<'PY'
-              import pathlib
-              import re
+          mapfile -t ALL_APPS < <(python3 -c '
+            import pathlib
+            import re
 
-              root = pathlib.Path('.')
-              pattern = re.compile(r'^app-id:\s*(\S+)\s*$')
-              apps = []
+            root = pathlib.Path(".")
+            pattern = re.compile(r"^app-id:\s*(\S+)\s*$")
+            apps = []
 
-              for manifest in sorted(root.glob('*/*.yaml')):
-                  app_dir = manifest.parent.name
-                  if manifest.name != f'{app_dir}.yaml':
-                      continue
+            for manifest in sorted(root.glob("*/*.yaml")):
+                app_dir = manifest.parent.name
+                if manifest.name != f"{app_dir}.yaml":
+                    continue
 
-                  app_id = None
-                  with manifest.open('r', encoding='utf-8') as fh:
-                      for line in fh:
-                          match = pattern.match(line)
-                          if match:
-                              app_id = match.group(1)
-                              break
+                app_id = None
+                with manifest.open("r", encoding="utf-8") as fh:
+                    for line in fh:
+                        match = pattern.match(line)
+                        if match:
+                            app_id = match.group(1)
+                            break
 
-                  if app_id == app_dir:
-                      apps.append(app_id)
+                if app_id == app_dir:
+                    apps.append(app_id)
 
-              for app in apps:
-                  print(app)
-            PY
-          )
+            for app in apps:
+                print(app)
+          ')
 
           ALL_JSON=$(printf '%s\n' "${ALL_APPS[@]}" | jq -R . | jq -sc 'map(select(length > 0))')
           MATRIX_JSON='[]'
