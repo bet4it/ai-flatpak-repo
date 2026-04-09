@@ -2,11 +2,25 @@
 set -eu
 
 APPDIR="/app/share/sh.superset.Superset"
+ORIG_SHELL="${SHELL:-/bin/sh}"
+ORIG_SHELL_NAME="${ORIG_SHELL##*/}"
+
+case "$ORIG_SHELL_NAME" in
+  bash|zsh|fish|ksh|sh)
+    SHELL_SHIM_NAME="$ORIG_SHELL_NAME"
+    ;;
+  dash|ash)
+    SHELL_SHIM_NAME="sh"
+    ;;
+  *)
+    SHELL_SHIM_NAME="sh"
+    ;;
+esac
 
 export PATH="/app/bin/host-tools:/app/bin:${PATH:-/usr/bin}"
-export SUPERSET_HOST_SHELL="${SHELL:-/bin/sh}"
+export SUPERSET_HOST_SHELL="$ORIG_SHELL"
 export SUPERSET_HOME_DIR="${SUPERSET_HOME_DIR:-${XDG_DATA_HOME:-${HOME}/.var/app/${FLATPAK_ID}/data}/.superset}"
-export SHELL="/app/bin/host-tools/host-shell"
+export SHELL="/app/bin/host-tools/${SHELL_SHIM_NAME}"
 export TMPDIR="${XDG_RUNTIME_DIR:-/tmp}/app/${FLATPAK_ID}"
 
 mkdir -p "$SUPERSET_HOME_DIR" "$TMPDIR"
