@@ -45,7 +45,7 @@ modules:
         set -e
         export PATH="/app/bin:/usr/lib/sdk/node24/bin:/usr/lib/sdk/rust-stable/bin:$PATH"
         sed -i 's/"identifier": "com.mty.aiohub"/"identifier": "io.github.miaotouy.aiohub"/' src-tauri/tauri.conf.json
-        bun install --frozen-lockfile
+        bun install
         bun run tauri build --no-bundle
         BIN_PATH=$(find src-tauri/target/release -maxdepth 1 -type f -executable -name aiohub | head -n 1)
         test -n "$BIN_PATH"
