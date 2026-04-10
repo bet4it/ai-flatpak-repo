@@ -11,6 +11,13 @@ For GitHub Actions with network access (`--share=network`):
 2. **Set `npm_config_nodedir`**: Point this to extracted headers for offline native module compilation.
 3. **Ship `node-gyp` explicitly when needed**: For Bun/Electron apps with native modules, do not assume the builder image already exposes `node-gyp`. If CI shows `node-gyp: command not found`, add a manifest module that installs `node-gyp` into `/app/bin` before the app build.
 
+## Bun Projects
+- **Treat Bun as an app dependency, not a GitHub Actions setup step**: In this repository the authoritative build runs inside `flatpak-builder`, so install Bun in the manifest as a module that places `bun` in `/app/bin`.
+- **Keep Node available alongside Bun**: Many Bun-based desktop apps still rely on Node tooling, Tauri helpers, or transitive packages that assume `node` exists. Prefer the `org.freedesktop.Sdk.Extension.node24` SDK extension for build-time Node.
+- **Runtime Node is separate**: SDK extensions are build-time only. If the packaged app launches Node at runtime, such as a Tauri sidecar script, ship a Node runtime in `/app/bin` as a regular manifest module.
+- **Cache Bun explicitly**: Set `BUN_INSTALL_CACHE_DIR` to a writable build directory such as `/run/build/<module>/bun-cache`.
+- **Native Bun dependencies follow the same header rules**: If `bun install` triggers native rebuilds, use vendored Node headers and add `node-gyp` explicitly just like pnpm/npm builds.
+
 ## The TAR_OPTIONS and Permissions Fix
 Flatpak sandboxes block `fchown`.
 - **Fix**: Use the YAML block scalar `|` to ensure environment variables persist. For `pnpm`, use **Double Insurance**:

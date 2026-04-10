@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.wygoralves.panes</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+  <name>Panes</name>
+  <summary>AI workspace for terminal, files, and Git</summary>
+  <developer_name>wygoralves</developer_name>
+  <launchable type="desktop-id">io.github.wygoralves.panes.desktop</launchable>
+  <url type="homepage">https://github.com/wygoralves/panes</url>
+  <url type="bugtracker">https://github.com/wygoralves/panes/issues</url>
+  <description>
+    <p>Panes is a Tauri desktop workspace for AI-assisted development with chat, terminals, file browsing, and Git tools.</p>
+    <p>This Flatpak builds Panes from source and bundles its Claude Agent SDK sidecar resources for Linux.</p>
+  </description>
+  <categories>
+    <category>Development</category>
+    <category>Utility</category>
+  </categories>
+  <releases>
+    <release version="0.54.1" date="2026-04-09"/>
+  </releases>
+  <content_rating type="oars-1.1"/>
+</component>

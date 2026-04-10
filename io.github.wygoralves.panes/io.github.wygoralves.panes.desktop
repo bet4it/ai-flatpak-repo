@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Panes
+Comment=AI workspace for Codex and Claude
+Exec=panes
+Icon=io.github.wygoralves.panes
+Terminal=false
+Type=Application
+Categories=Development;Utility;
+Keywords=AI;Codex;Claude;Editor;Workspace;Terminal;Git;
+StartupWMClass=io.github.wygoralves.panes
