@@ -202,7 +202,7 @@ jobs:
 
       - name: Download Previous Repo Seed
         if: ${{ steps.seed.outputs.artifact_id != '' }}
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           repository: ${{ github.repository }}
           github-token: ${{ github.token }}
@@ -212,7 +212,7 @@ jobs:
 
       - name: Download All Bundles
         if: ${{ needs.discover.outputs.matrix != '[]' }}
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: bundles
           merge-multiple: true
@@ -265,14 +265,14 @@ jobs:
           flatpak build-update-repo --generate-static-deltas --prune repo
 
       - name: Upload Final Repo
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: final-repo
           path: repo/
 
   deploy:
     name: Deploy to GitHub Pages
-    needs: reconstruct
+    needs: [discover, reconstruct]
     if: ${{ needs.discover.outputs.should_run == 'true' }}
     runs-on: ubuntu-latest
     environment:
@@ -280,13 +280,13 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Download Final Repo
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: final-repo
           path: repo
 
       - name: Upload Pages Artifact
-        uses: actions/upload-pages-artifact@v4
+        uses: actions/upload-pages-artifact@v5
         with:
           path: ./repo
 

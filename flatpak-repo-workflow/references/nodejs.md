@@ -17,6 +17,11 @@ For GitHub Actions with network access (`--share=network`):
 - **Runtime Node is separate**: SDK extensions are build-time only. If the packaged app launches Node at runtime, such as a Tauri sidecar script, ship a Node runtime in `/app/bin` as a regular manifest module.
 - **Cache Bun explicitly**: Set `BUN_INSTALL_CACHE_DIR` to a writable build directory such as `/run/build/<module>/bun-cache`.
 - **Native Bun dependencies follow the same header rules**: If `bun install` triggers native rebuilds, use vendored Node headers and add `node-gyp` explicitly just like pnpm/npm builds.
+- **Do not assume `bun install --frozen-lockfile` is safe for every upstream release**: Some upstream Bun desktop apps ship a `bun.lock` that Bun still wants to rewrite in CI. If the Flatpak build fails with `lockfile had changes, but lockfile is frozen`, verify that upstream expects a regenerated lockfile and then relax the install step to plain `bun install` instead of treating it as a network or cache failure.
+
+## GitHub Actions
+- **Keep artifact actions on current majors**: This repository rebuilds and republishes the Flatpak repo through GitHub Actions, so stale `actions/download-artifact`, `actions/upload-artifact`, or `actions/upload-pages-artifact` versions will surface platform deprecation warnings before the app manifests do.
+- **Node 24 is the current baseline for Actions**: If GitHub warns that artifact actions are still running on Node 20, upgrade those actions to their current major versions rather than papering over the warning in the app manifests.
 
 ## The TAR_OPTIONS and Permissions Fix
 Flatpak sandboxes block `fchown`.
