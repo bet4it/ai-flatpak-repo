@@ -88,8 +88,8 @@ modules:
       - ln -Tsv /usr/lib/$(gcc --print-multiarch)/libXdamage.so.? /app/lib/libXdamage.so
     sources:
       - type: git
-        url: https://github.com/rijuyuezhu/wemeet-wayland-screenshare.git
-        commit: 71e788983a28f62914ebd5d95af59536658c238c
+        url: https://github.com/DerryAlex/wemeet-wayland-screenshare.git
+        commit: 866c00597af8a67d67d0d88ac52b58b966e1b1bb
 
   - name: wemeet
     buildsystem: simple
