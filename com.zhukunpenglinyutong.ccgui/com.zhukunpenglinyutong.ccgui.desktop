@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=ccgui
+Comment=AI coding workspace for Claude Code, Codex, and more
+Exec=ccgui
+Icon=com.zhukunpenglinyutong.ccgui
+Terminal=false
+Type=Application
+Categories=Development;IDE;Utility;
+Keywords=AI;Claude;Codex;OpenCode;Gemini;Terminal;Git;Workspace;
+StartupWMClass=com.zhukunpenglinyutong.ccgui

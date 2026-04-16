@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>com.zhukunpenglinyutong.ccgui</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+  <name>ccgui</name>
+  <summary>AI coding workspace for Claude Code, Codex, OpenCode, and Gemini</summary>
+  <developer_name>zhukunpenglinyutong</developer_name>
+  <launchable type="desktop-id">com.zhukunpenglinyutong.ccgui.desktop</launchable>
+  <url type="homepage">https://github.com/zhukunpenglinyutong/desktop-cc-gui</url>
+  <url type="bugtracker">https://github.com/zhukunpenglinyutong/desktop-cc-gui/issues</url>
+  <description>
+    <p>ccgui is a Tauri desktop workspace for AI-assisted development with support for Claude Code, Codex CLI, OpenCode CLI, Gemini CLI, built-in terminals, Git tooling, kanban boards, and planning panels.</p>
+    <p>This Flatpak builds ccgui from source and disables the upstream self-updater so application updates stay on the Flatpak repository workflow.</p>
+  </description>
+  <categories>
+    <category>Development</category>
+    <category>IDE</category>
+    <category>Utility</category>
+  </categories>
+  <releases>
+    <release version="0.4.1" date="2026-04-16"/>
+  </releases>
+  <content_rating type="oars-1.1"/>
+</component>
