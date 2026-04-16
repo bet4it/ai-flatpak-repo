@@ -5,6 +5,7 @@ sdk: org.gnome.Sdk
 sdk-extensions:
   - org.freedesktop.Sdk.Extension.rust-stable
   - org.freedesktop.Sdk.Extension.node24
+  - org.freedesktop.Sdk.Extension.llvm21
 command: ccgui
 finish-args:
   - --share=network
@@ -17,9 +18,10 @@ finish-args:
   - --talk-name=org.freedesktop.Notifications
 
 build-options:
-  append-path: /usr/lib/sdk/rust-stable/bin:/usr/lib/sdk/node24/bin:/app/bin
+  append-path: /usr/lib/sdk/llvm21/bin:/usr/lib/sdk/rust-stable/bin:/usr/lib/sdk/node24/bin:/app/bin
   env:
     CARGO_HOME: /run/build/ccgui/cargo
+    LIBCLANG_PATH: /usr/lib/sdk/llvm21/lib
     XDG_CACHE_HOME: /run/build/ccgui/cache
 
 modules:
