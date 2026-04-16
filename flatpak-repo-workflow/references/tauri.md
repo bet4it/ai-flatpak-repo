@@ -59,3 +59,16 @@ install -Dm755 "$BIN_PATH" /app/bin/binary-name
 
 ### 3. CI/CD Submodule Support
 Ensure `actions/checkout` has `submodules: true` to prevent build failures.
+
+### 4. Choose GNOME runtime when upstream Linux deps imply the WebKitGTK stack
+If upstream Linux packaging/dev configuration explicitly depends on libraries like `gtk3`, `libsoup_3`, `webkitgtk_4_1`, or `librsvg`, prefer `org.gnome.Platform` / `org.gnome.Sdk` unless you have already verified the equivalent Freedesktop runtime support.
+
+### 5. Disable Upstream Self-Updaters
+If a Tauri app uses `@tauri-apps/plugin-updater` / `tauri-plugin-updater`, disable both automatic and user-triggered updater paths in Flatpak builds.
+
+Flatpak updates must come from the repository remote, not from the app pulling GitHub release feeds such as `latest.json` directly.
+
+### 6. Verify Home-Directory Integrations Before Sandboxing Them Away
+Do not assume a Tauri desktop app is already XDG-clean. Many AI/developer workbench apps explicitly resolve `HOME` / `dirs::home_dir()` and read or write paths like `~/.claude`, `~/.codex`, `~/.gemini`, `~/.opencode`, or an app-specific dot-directory.
+
+When those host-home integrations are part of the product, forcing everything into per-app XDG directories without patching the code will break real workflows. Read the actual path-resolution code first, then decide whether the correct packaging move is a wrapper/env remap or `--filesystem=home`.
