@@ -1,0 +1,148 @@
+app-id: com.tencent.wemeet
+runtime: org.freedesktop.Platform
+runtime-version: '25.08'
+sdk: org.freedesktop.Sdk
+separate-locales: false
+rename-icon: wemeet
+rename-desktop-file: wemeet.desktop
+command: wemeetapp
+finish-args:
+  - --share=ipc
+  - --share=network
+  - --socket=x11
+  - --socket=wayland
+  - --socket=pulseaudio
+  - --device=all
+  - --filesystem=xdg-run/pipewire-0
+  - --talk-name=org.gnome.Shell.Screencast
+  - --talk-name=org.freedesktop.Notifications
+  - --talk-name=org.kde.StatusNotifierWatcher
+  - --env=XDG_SESSION_TYPE=x11
+  - --env=QT_QPA_PLATFORM=xcb
+  - --env=LD_PRELOAD=/app/lib/wemeet/libhook.so
+  - --unset-env=WAYLAND_DISPLAY
+  - --env=QT_AUTO_SCREEN_SCALE_FACTOR=1
+cleanup:
+  - /include
+  - /lib/cmake
+  - /lib/pkgconfig
+  - /share/doc
+  - /share/man
+
+modules:
+  - name: libportal
+    buildsystem: meson
+    config-opts:
+      - -Dbackend-gtk3=enabled
+      - -Dbackend-gtk4=disabled
+      - -Dbackend-qt5=disabled
+      - -Dbackend-qt6=disabled
+      - -Dintrospection=false
+      - -Dvapi=false
+      - -Ddocs=false
+      - -Dtests=false
+    sources:
+      - type: archive
+        url: https://github.com/flatpak/libportal/archive/0.9.1.tar.gz
+        sha256: ea422b789ae487e04194d387bea031fd7485bf88a18aef8c767f7d1c29496a4e
+        x-checker-data:
+          type: anitya
+          project-id: 230124
+          stable-only: true
+          url-template: https://github.com/flatpak/libportal/archive/$version.tar.gz
+
+  - name: opencv
+    buildsystem: cmake-ninja
+    builddir: true
+    config-opts:
+      - -DCMAKE_BUILD_TYPE=Release
+      - -DOPENCV_GENERATE_PKGCONFIG=ON
+      - -DBUILD_LIST=imgproc
+    cleanup:
+      - /bin
+      - /share/opencv4
+    sources:
+      - type: archive
+        url: https://github.com/opencv/opencv/archive/4.13.0.tar.gz
+        sha256: 1d40ca017ea51c533cf9fd5cbde5b5fe7ae248291ddf2af99d4c17cf8e13017d
+        x-checker-data:
+          type: anitya
+          project-id: 6615
+          stable-only: true
+          url-template: https://github.com/opencv/opencv/archive/$version.tar.gz
+      - type: archive
+        url: https://github.com/opencv/opencv_contrib/archive/4.13.0.tar.gz
+        sha256: 1e0077a4fd2960a7d2f4c9e49d6ba7bb891cac2d1be36d7e8e47aa97a9d1039b
+        x-checker-data:
+          type: anitya
+          project-id: 6615
+          stable-only: true
+          url-template: https://github.com/opencv/opencv_contrib/archive/$version.tar.gz
+
+  - name: wemeet-wayland-screenshare
+    buildsystem: cmake-ninja
+    config-opts:
+      - -DCMAKE_BUILD_TYPE=Release
+    post-install:
+      - ln -Tsv /usr/lib/$(gcc --print-multiarch)/libXext.so.? /app/lib/libXext.so
+      - ln -Tsv /usr/lib/$(gcc --print-multiarch)/libXdamage.so.? /app/lib/libXdamage.so
+    sources:
+      - type: git
+        url: https://github.com/rijuyuezhu/wemeet-wayland-screenshare.git
+        commit: 71e788983a28f62914ebd5d95af59536658c238c
+
+  - name: wemeet
+    buildsystem: simple
+    build-commands:
+      - install -Dm644 ${FLATPAK_ID}.metainfo.xml -t /app/share/metainfo
+      - install -Dm644 wemeet.svg -t /app/share/icons/hicolor/scalable/apps
+      - install -Dm644 wemeet.desktop -t /app/share/applications
+      - install -D wemeetapp.sh /app/bin/wemeetapp
+      - install -D apply_extra -t /app/bin
+      - install -D /usr/bin/desktop-file-edit -t /app/bin/
+    sources:
+      - type: script
+        dest-filename: apply_extra
+        commands:
+          - bsdtar --to-stdout -xf wemeet.deb data.* | bsdtar -xf -
+          - rm wemeet.deb
+          - echo '{}' > opt/wemeet/bin/xcast.conf
+
+      - type: script
+        dest-filename: wemeetapp.sh
+        commands:
+          - exec /app/extra/opt/wemeet/wemeetapp.sh "$@"
+
+      - type: file
+        path: com.tencent.wemeet.metainfo.xml
+
+      - type: file
+        path: wemeet.svg
+
+      - type: file
+        path: wemeet.desktop
+
+      - type: extra-data
+        filename: wemeet.deb
+        only-arches: [x86_64]
+        url: https://updatecdn.meeting.qq.com/cos/72e0e0023e1d1e6d4123fba28821aea1/TencentMeeting_0300000000_3.26.10.401_x86_64_default.publish.officialwebsite.deb
+        sha256: 70f37b029209c0ef91be9813eebf6650c6cb9a00f7c718490158773e2fe6acaf
+        size: 197268516
+        x-checker-data:
+          type: json
+          url: https://meeting.tencent.com/web-service/query-download-info?q=[{%22package-type%22:%22app%22,%22channel%22:%220300000000%22,%22platform%22:%22linux%22,%22arch%22:%22x86_64%22,%22decorators%22:[%22deb%22]}]&nonce=123456789abcdefg
+          version-query: .["info-list"][0].version
+          url-query: .["info-list"][0].url
+          is-main-source: true
+
+      - type: extra-data
+        filename: wemeet.deb
+        only-arches: [aarch64]
+        url: https://updatecdn.meeting.qq.com/cos/c06d6bc4a3370dbfb2f43bbc6ff8969e/TencentMeeting_0300000000_3.26.10.401_arm64_default.publish.officialwebsite.deb
+        sha256: 5b9d04d5b9aa24b3c353b158d2a34a3e5875cfc03d133d4673e36b1d0841c202
+        size: 180672348
+        x-checker-data:
+          type: json
+          url: https://meeting.tencent.com/web-service/query-download-info?q=[{%22package-type%22:%22app%22,%22channel%22:%220300000000%22,%22platform%22:%22linux%22,%22arch%22:%22arm64%22,%22decorators%22:[%22deb%22]}]&nonce=123456789abcdefg
+          version-query: .["info-list"][0].version
+          url-query: .["info-list"][0].url
