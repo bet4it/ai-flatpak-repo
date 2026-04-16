@@ -30,7 +30,6 @@ modules:
     build-options:
       build-args: ["--share=network"]
     build-commands:
-      - export PATH="/app/bin:/usr/lib/sdk/node24/bin:/usr/lib/sdk/rust-stable/bin:$PATH"
       - |
         python3 - <<'PY'
         from pathlib import Path
@@ -74,10 +73,10 @@ modules:
         PY
       - npm ci
       - npm exec -- tauri build --no-bundle
-      - BIN_PATH=$(find src-tauri/target/release -maxdepth 1 -type f -executable \( -name cc-gui -o -name ccgui \) | grep -v "\.d$" | head -n 1); test -n "$BIN_PATH"
-      - DAEMON_PATH=$(find src-tauri/target/release -maxdepth 1 -type f -executable -name cc_gui_daemon | grep -v "\.d$" | head -n 1); test -n "$DAEMON_PATH"
-      - install -Dm755 "$BIN_PATH" /app/bin/ccgui
-      - install -Dm755 "$DAEMON_PATH" /app/bin/cc_gui_daemon
+      - test -x src-tauri/target/release/cc-gui
+      - test -x src-tauri/target/release/cc_gui_daemon
+      - install -Dm755 src-tauri/target/release/cc-gui /app/bin/ccgui
+      - install -Dm755 src-tauri/target/release/cc_gui_daemon /app/bin/cc_gui_daemon
       - install -d /app/bin/dist
       - cp -a dist/. /app/bin/dist/
       - install -Dm644 com.zhukunpenglinyutong.ccgui.desktop /app/share/applications/com.zhukunpenglinyutong.ccgui.desktop
