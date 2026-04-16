@@ -77,3 +77,8 @@ When those host-home integrations are part of the product, forcing everything in
 If the Rust build pulls in crates that use `bindgen` (for example `whisper-rs-sys`), Flatpak builds can fail late in the Cargo phase with errors like `Unable to find libclang`.
 
 For Freedesktop/GNOME 25.08-era builds, add an LLVM SDK extension such as `org.freedesktop.Sdk.Extension.llvm21`, prepend its `bin` directory to `PATH`, and set `LIBCLANG_PATH` to the extension's `lib` directory.
+
+### 8. Do not rely on shell variables across separate build-commands
+Each Flatpak `build-commands` entry is executed independently. If you compute `BIN_PATH=...` in one line and try to use `$BIN_PATH` in a later line, it will be empty unless both actions happen inside the same multiline shell block.
+
+For fixed Rust binary names, prefer direct `install -Dm755 src-tauri/target/release/<binary>` commands, or keep discovery and installation in the same `|` block.
