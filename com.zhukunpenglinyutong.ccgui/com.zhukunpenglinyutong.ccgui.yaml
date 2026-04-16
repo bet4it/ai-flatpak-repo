@@ -1,0 +1,93 @@
+app-id: com.zhukunpenglinyutong.ccgui
+runtime: org.gnome.Platform
+runtime-version: '50'
+sdk: org.gnome.Sdk
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.rust-stable
+  - org.freedesktop.Sdk.Extension.node24
+command: ccgui
+finish-args:
+  - --share=network
+  - --share=ipc
+  - --socket=fallback-x11
+  - --socket=wayland
+  - --device=dri
+  - --socket=pulseaudio
+  - --filesystem=home
+  - --talk-name=org.freedesktop.Notifications
+
+build-options:
+  append-path: /usr/lib/sdk/rust-stable/bin:/usr/lib/sdk/node24/bin:/app/bin
+  env:
+    CARGO_HOME: /run/build/ccgui/cargo
+    XDG_CACHE_HOME: /run/build/ccgui/cache
+
+modules:
+  - name: ccgui
+    buildsystem: simple
+    build-options:
+      build-args: ["--share=network"]
+    build-commands:
+      - export PATH="/app/bin:/usr/lib/sdk/node24/bin:/usr/lib/sdk/rust-stable/bin:$PATH"
+      - |
+        python3 - <<'PY'
+        from pathlib import Path
+
+        path = Path("src/features/update/hooks/useUpdater.ts")
+        text = path.read_text(encoding="utf-8")
+
+        replacements = [
+            (
+                "const AUTO_UPDATE_ENABLED = true;",
+                "const AUTO_UPDATE_ENABLED = false;",
+            ),
+            (
+                "  const checkForUpdates = useCallback(async (options?: { announceNoUpdate?: boolean }) => {\n",
+                "  const checkForUpdates = useCallback(async (options?: { announceNoUpdate?: boolean }) => {\n"
+                "    if (!effectiveEnabled) {\n"
+                "      setState({ stage: \"idle\" });\n"
+                "      return;\n"
+                "    }\n",
+            ),
+            (
+                "  const startUpdate = useCallback(async () => {\n",
+                "  const startUpdate = useCallback(async () => {\n"
+                "    if (!effectiveEnabled) {\n"
+                "      setState({ stage: \"idle\" });\n"
+                "      return;\n"
+                "    }\n\n",
+            ),
+            (
+                "  }, [checkForUpdates, onDebug]);\n",
+                "  }, [checkForUpdates, effectiveEnabled, onDebug]);\n",
+            ),
+        ]
+
+        for old, new in replacements:
+            if old not in text:
+                raise SystemExit(f"expected text not found in {path}: {old}")
+            text = text.replace(old, new, 1)
+
+        path.write_text(text, encoding="utf-8")
+        PY
+      - npm ci
+      - npm exec -- tauri build --no-bundle
+      - BIN_PATH=$(find src-tauri/target/release -maxdepth 1 -type f -executable \( -name cc-gui -o -name ccgui \) | grep -v "\.d$" | head -n 1); test -n "$BIN_PATH"
+      - DAEMON_PATH=$(find src-tauri/target/release -maxdepth 1 -type f -executable -name cc_gui_daemon | grep -v "\.d$" | head -n 1); test -n "$DAEMON_PATH"
+      - install -Dm755 "$BIN_PATH" /app/bin/ccgui
+      - install -Dm755 "$DAEMON_PATH" /app/bin/cc_gui_daemon
+      - install -d /app/bin/dist
+      - cp -a dist/. /app/bin/dist/
+      - install -Dm644 com.zhukunpenglinyutong.ccgui.desktop /app/share/applications/com.zhukunpenglinyutong.ccgui.desktop
+      - install -Dm644 com.zhukunpenglinyutong.ccgui.metainfo.xml /app/share/metainfo/com.zhukunpenglinyutong.ccgui.metainfo.xml
+      - install -Dm644 icon.png /app/share/icons/hicolor/512x512/apps/com.zhukunpenglinyutong.ccgui.png
+    sources:
+      - type: git
+        url: https://github.com/zhukunpenglinyutong/desktop-cc-gui.git
+        commit: adcda48007635080e227a8d2a9ecb0398249ad0a
+      - type: file
+        path: com.zhukunpenglinyutong.ccgui.desktop
+      - type: file
+        path: com.zhukunpenglinyutong.ccgui.metainfo.xml
+      - type: file
+        path: icon.png
