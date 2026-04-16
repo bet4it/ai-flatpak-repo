@@ -32,9 +32,11 @@ Before writing any manifest, complete all of the following:
 ### Local vs CI Responsibility (MANDATORY)
 - This repository's Flatpak packaging workflow is **GitHub-Actions-first and GitHub-Actions-required**. For packaging requests in this repo, the real Flatpak build must be performed through the repository's GitHub Actions workflow.
 - For packaging requests in this repository, **creating the commit and pushing it so GitHub Actions can perform the real Flatpak build is part of the standard workflow and does not require a separate user approval step**.
+- **Never send a completion-style summary before commit, push, and a fresh GitHub Actions result exist in the current turn.** In this repository, anything earlier is only an intermediate progress update.
 - Treat **"manifest/metadata ready but not committed/pushed" as an incomplete packaging task**. If the agent stops before commit/push, it has not followed this repository workflow.
 - Do **not** ask the user whether to commit, whether to push, or whether to trigger CI once packaging work is ready; in this repository those actions are the default handoff to the authoritative build system.
 - After pushing, the agent must immediately switch into GitHub Actions verification mode and fetch a **fresh** remote run status in the same workflow, rather than ending at "push succeeded".
+- If the first remote build fails, the default behavior is to inspect the failed job log, patch the packaging, commit, push, and re-check again. Do not stop at the first CI failure unless the user explicitly asks to stop or a hard external blocker prevents progress.
 - Local work should focus on: upstream inspection, manifest authoring, metadata/icon preparation, checksum lookup from authoritative upstream metadata, and light validation such as `flatpak-builder --show-manifest` or `appstreamcli validate`.
 - Do **not** perform ad-hoc local Flatpak packaging builds as the primary build path for this repository unless the user explicitly asks for a local reproduction/debugging workflow.
 - Do **not** download large toolchain archives or upstream release artifacts locally just to prepare packaging work when that download is meant to support the real package build; encode those downloads as manifest sources so GitHub Actions fetches them inside `flatpak-builder`.
@@ -110,6 +112,7 @@ Always check for the latest stable, non-EOL runtimes before creating or updating
       - List recent runs if the latest one is ambiguous:
         - `gh run list --limit 5 --json databaseId,headSha,status,conclusion,workflowName,createdAt`
     - Use `gh run watch <RUN_ID> --exit-status --interval 20` as the default blocking wait command after push.
+    - Default post-push loop: `push -> short wait -> identify run by head SHA -> gh run watch -> if failed, inspect failed job log immediately -> patch -> commit -> push -> repeat`.
     - **Do not claim you are “watching”, “monitoring”, or “still following” a run unless you have either (a) an active blocking `gh run watch` in progress, or (b) you just performed a fresh `gh run view` / `gh run list` check in this turn.**
     - **If the user sends any follow-up while a remote build may still be running or may have finished meanwhile, re-query GitHub Actions immediately before answering.** Never answer from memory or from an earlier status snapshot.
     - A status report about a run must be based on a fresh remote check from the current turn. If enough time has passed that the run could have changed state, check again first.
@@ -129,6 +132,7 @@ Always check for the latest stable, non-EOL runtimes before creating or updating
 - When the workflow trigger in Section 0 matches, the response should communicate progress in terms of execution phases: preflight, upstream inspection, manifest authoring, validation, blockers.
 - Do not present exploratory research as the final result when no manifest/metadata changes were made.
 - Do not present "I prepared the files" as the final result when commit/push/CI follow-through is still missing; for this repository that is only a mid-work update.
+- Do not ask the user whether to continue after a packaging CI failure unless a genuine blocker requires user input; by default, continue the fix/commit/push/re-check loop until the remote build reaches a current success or a concrete external blocker is proven.
 - If blocked, report the exact missing asset, dependency, runtime issue, or upstream incompatibility and continue with any remaining non-blocked apps in the same request.
 - If the user asks to "continue", resume the next pending workflow step rather than re-explaining prior research.
 

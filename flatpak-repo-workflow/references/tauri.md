@@ -72,3 +72,8 @@ Flatpak updates must come from the repository remote, not from the app pulling G
 Do not assume a Tauri desktop app is already XDG-clean. Many AI/developer workbench apps explicitly resolve `HOME` / `dirs::home_dir()` and read or write paths like `~/.claude`, `~/.codex`, `~/.gemini`, `~/.opencode`, or an app-specific dot-directory.
 
 When those host-home integrations are part of the product, forcing everything into per-app XDG directories without patching the code will break real workflows. Read the actual path-resolution code first, then decide whether the correct packaging move is a wrapper/env remap or `--filesystem=home`.
+
+### 7. Rust bindgen users may need the LLVM SDK extension
+If the Rust build pulls in crates that use `bindgen` (for example `whisper-rs-sys`), Flatpak builds can fail late in the Cargo phase with errors like `Unable to find libclang`.
+
+For Freedesktop/GNOME 25.08-era builds, add an LLVM SDK extension such as `org.freedesktop.Sdk.Extension.llvm21`, prepend its `bin` directory to `PATH`, and set `LIBCLANG_PATH` to the extension's `lib` directory.
