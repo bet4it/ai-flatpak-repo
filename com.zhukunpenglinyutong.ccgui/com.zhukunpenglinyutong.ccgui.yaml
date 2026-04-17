@@ -15,6 +15,7 @@ finish-args:
   - --device=dri
   - --socket=pulseaudio
   - --filesystem=home
+  - --talk-name=org.freedesktop.Flatpak
   - --talk-name=org.freedesktop.Notifications
 
 build-options:
@@ -75,8 +76,15 @@ modules:
       - npm exec -- tauri build --no-bundle
       - test -x src-tauri/target/release/cc-gui
       - test -x src-tauri/target/release/cc_gui_daemon
-      - install -Dm755 src-tauri/target/release/cc-gui /app/bin/ccgui
+      - install -Dm755 src-tauri/target/release/cc-gui /app/bin/ccgui-bin
       - install -Dm755 src-tauri/target/release/cc_gui_daemon /app/bin/cc_gui_daemon
+      - install -Dm755 ccgui.sh /app/bin/ccgui
+      - install -Dm755 host-exec.sh /app/bin/host-tools/host-exec
+      - install -Dm755 host-shell.sh /app/bin/host-tools/host-shell
+      - |
+        for cmd in bash bun claude codex cursor fish gemini gh git node npm npx opencode pnpm python python3 sh xdg-mime xdg-open xdg-settings zsh; do
+          ln -sf host-exec /app/bin/host-tools/$cmd
+        done
       - install -d /app/bin/dist
       - cp -a dist/. /app/bin/dist/
       - install -Dm644 com.zhukunpenglinyutong.ccgui.desktop /app/share/applications/com.zhukunpenglinyutong.ccgui.desktop
@@ -92,3 +100,9 @@ modules:
         path: com.zhukunpenglinyutong.ccgui.metainfo.xml
       - type: file
         path: icon.png
+      - type: file
+        path: ccgui.sh
+      - type: file
+        path: host-exec.sh
+      - type: file
+        path: host-shell.sh
