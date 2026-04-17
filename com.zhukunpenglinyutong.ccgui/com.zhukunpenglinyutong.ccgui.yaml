@@ -85,6 +85,10 @@ modules:
         for cmd in bash bun claude codex cursor fish gemini gh git node npm npx opencode pnpm python python3 sh xdg-mime xdg-open xdg-settings zsh; do
           ln -sf host-exec /app/bin/host-tools/$cmd
         done
+      - |
+        for cmd in bun claude codex gemini gh git node npm npx opencode pnpm python python3; do
+          ln -sf host-tools/host-exec /app/bin/$cmd
+        done
       - install -d /app/bin/dist
       - cp -a dist/. /app/bin/dist/
       - install -Dm644 com.zhukunpenglinyutong.ccgui.desktop /app/share/applications/com.zhukunpenglinyutong.ccgui.desktop

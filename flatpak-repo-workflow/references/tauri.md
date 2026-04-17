@@ -87,3 +87,5 @@ For fixed Rust binary names, prefer direct `install -Dm755 src-tauri/target/rele
 Tauri AI workbenches often discover and launch host-installed CLIs such as `codex`, `claude`, `node`, `npm`, or `git`. Granting `--filesystem=home` alone is not enough: the sandbox still cannot execute arbitrary host binaries.
 
 When the product is expected to drive host developer tools, add `--talk-name=org.freedesktop.Flatpak`, install small `/app/bin/host-tools/*` shims that call `flatpak-spawn --host`, and start the app through a wrapper that prepends `/app/bin/host-tools` to `PATH`. If the app also respects `$SHELL`, point it at a matching host-shell shim so spawned shells resolve on the host side instead of inside the sandbox.
+
+If any code path may probe CLIs before that wrapper-adjusted `PATH` is in effect, also expose the core host-backed command names (for example `codex`, `claude`, `node`, `npm`) directly in `/app/bin` as symlinks to the host shim so detection still succeeds with a plain `/app/bin:/usr/bin` runtime path.
