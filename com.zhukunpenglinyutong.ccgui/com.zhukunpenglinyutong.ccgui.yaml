@@ -98,6 +98,49 @@ modules:
                 ),
             ],
         )
+
+        patch_file(
+            "src-tauri/src/workspaces/commands.rs",
+            [
+                (
+                    "    // Verify the CLI is installed\n"
+                    "    let cli_installed = match engine_type {\n"
+                    "        EngineType::Claude => {\n"
+                    "            let claude_bin = {\n"
+                    "                let settings = state.app_settings.lock().await;\n"
+                    "                settings.claude_bin.clone()\n"
+                    "            };\n"
+                    "            detect_claude_status(claude_bin.as_deref()).await.installed\n"
+                    "        }\n"
+                    "        EngineType::Gemini => detect_gemini_status(None).await.installed,\n"
+                    "        EngineType::OpenCode => detect_opencode_status(None).await.installed,\n"
+                    "        _ => false,\n"
+                    "    };\n"
+                    "    if !cli_installed {\n"
+                    "        return Err(format!(\"CLI_NOT_FOUND:{}\", engine_name));\n"
+                    "    }\n",
+                    "    // Verify the CLI is installed and preserve the underlying probe error.\n"
+                    "    let cli_status = match engine_type {\n"
+                    "        EngineType::Claude => {\n"
+                    "            let claude_bin = {\n"
+                    "                let settings = state.app_settings.lock().await;\n"
+                    "                settings.claude_bin.clone()\n"
+                    "            };\n"
+                    "            detect_claude_status(claude_bin.as_deref()).await\n"
+                    "        }\n"
+                    "        EngineType::Gemini => detect_gemini_status(None).await,\n"
+                    "        EngineType::OpenCode => detect_opencode_status(None).await,\n"
+                    "        _ => return Err(format!(\"Unsupported CLI engine: {:?}\", engine_type)),\n"
+                    "    };\n"
+                    "    if !cli_status.installed {\n"
+                    "        if let Some(error) = cli_status.error.filter(|value| !value.trim().is_empty()) {\n"
+                    "            return Err(format!(\"CLI_NOT_FOUND:{}\\n\\n{}\", engine_name, error));\n"
+                    "        }\n"
+                    "        return Err(format!(\"CLI_NOT_FOUND:{}\", engine_name));\n"
+                    "    }\n",
+                ),
+            ],
+        )
         PY
       - npm ci
       - npm exec -- tauri build --no-bundle
