@@ -141,6 +141,128 @@ modules:
                 ),
             ],
         )
+
+        patch_file(
+            "src-tauri/src/engine/status.rs",
+            [
+                (
+                    "/// Detect Claude Code CLI installation status\n"
+                    "pub async fn detect_claude_status(custom_bin: Option<&str>) -> EngineStatus {\n"
+                    "    let bin_path = resolve_bin_path(\"claude\", custom_bin);\n"
+                    "    let bin = bin_path\n"
+                    "        .as_ref()\n"
+                    "        .map(|p| p.to_string_lossy().to_string())\n"
+                    "        .unwrap_or_else(|| \"claude\".to_string());\n"
+                    "    let path_env = build_codex_path_env(custom_bin);\n"
+                    "\n"
+                    "    let (installed, version, error) = probe_cli_version(&bin, \"claude\", path_env.as_ref()).await;\n"
+                    "\n"
+                    "    if !installed {\n"
+                    "        return not_installed_status(EngineType::Claude, error);\n"
+                    "    }\n"
+                    "\n"
+                    "    let home_dir = get_claude_home_dir();\n"
+                    "    let models = get_claude_models(&bin, path_env.as_ref()).await;\n"
+                    "    let default_model = models.iter().find(|m| m.default).map(|m| m.id.clone());\n"
+                    "\n"
+                    "    EngineStatus {\n"
+                    "        engine_type: EngineType::Claude,\n"
+                    "        installed: true,\n"
+                    "        version,\n"
+                    "        bin_path: Some(bin.to_string()),\n"
+                    "        home_dir: home_dir.map(|p| p.to_string_lossy().to_string()),\n"
+                    "        models,\n"
+                    "        default_model,\n"
+                    "        features: EngineFeatures::claude(),\n"
+                    "        error: None,\n"
+                    "    }\n"
+                    "}\n",
+                    "/// Detect Claude Code CLI installation status\n"
+                    "pub async fn detect_claude_status(custom_bin: Option<&str>) -> EngineStatus {\n"
+                    "    let path_env = build_codex_path_env(custom_bin);\n"
+                    "    let custom = custom_bin\n"
+                    "        .map(str::trim)\n"
+                    "        .filter(|value| !value.is_empty())\n"
+                    "        .map(|value| value.to_string());\n"
+                    "\n"
+                    "    let mut attempted_bin = custom.clone().unwrap_or_else(|| {\n"
+                    "        resolve_bin_path(\"claude\", None)\n"
+                    "            .map(|p| p.to_string_lossy().to_string())\n"
+                    "            .unwrap_or_else(|| \"claude\".to_string())\n"
+                    "    });\n"
+                    "    let (mut installed, mut version, mut error) =\n"
+                    "        probe_cli_version(&attempted_bin, \"claude\", path_env.as_ref()).await;\n"
+                    "\n"
+                    "    if !installed {\n"
+                    "        if let Some(fallback_bin) = resolve_bin_path(\"claude\", None)\n"
+                    "            .map(|p| p.to_string_lossy().to_string())\n"
+                    "            .filter(|value| value != &attempted_bin)\n"
+                    "        {\n"
+                    "            let fallback_result =\n"
+                    "                probe_cli_version(&fallback_bin, \"claude\", path_env.as_ref()).await;\n"
+                    "            if fallback_result.0 {\n"
+                    "                attempted_bin = fallback_bin;\n"
+                    "                installed = fallback_result.0;\n"
+                    "                version = fallback_result.1;\n"
+                    "                error = fallback_result.2;\n"
+                    "            } else if error.is_none() {\n"
+                    "                error = fallback_result.2;\n"
+                    "            }\n"
+                    "        }\n"
+                    "    }\n"
+                    "\n"
+                    "    if !installed {\n"
+                    "        return not_installed_status(EngineType::Claude, error);\n"
+                    "    }\n"
+                    "\n"
+                    "    let home_dir = get_claude_home_dir();\n"
+                    "    let models = get_claude_models(&attempted_bin, path_env.as_ref()).await;\n"
+                    "    let default_model = models.iter().find(|m| m.default).map(|m| m.id.clone());\n"
+                    "\n"
+                    "    EngineStatus {\n"
+                    "        engine_type: EngineType::Claude,\n"
+                    "        installed: true,\n"
+                    "        version,\n"
+                    "        bin_path: Some(attempted_bin.clone()),\n"
+                    "        home_dir: home_dir.map(|p| p.to_string_lossy().to_string()),\n"
+                    "        models,\n"
+                    "        default_model,\n"
+                    "        features: EngineFeatures::claude(),\n"
+                    "        error: None,\n"
+                    "    }\n"
+                    "}\n",
+                ),
+            ],
+        )
+
+        patch_file(
+            "src-tauri/src/engine/claude.rs",
+            [
+                (
+                    "        let bin = if let Some(ref custom) = self.bin_path {\n"
+                    "            custom.clone()\n"
+                    "        } else {\n"
+                    "            crate::backend::app_server::find_cli_binary(\"claude\", None)\n"
+                    "                .map(|p| p.to_string_lossy().to_string())\n"
+                    "                .unwrap_or_else(|| \"claude\".to_string())\n"
+                    "        };\n",
+                    "        let bin = if let Some(ref custom) = self.bin_path {\n"
+                    "            let trimmed = custom.trim();\n"
+                    "            if !trimmed.is_empty() && Path::new(trimmed).exists() {\n"
+                    "                trimmed.to_string()\n"
+                    "            } else {\n"
+                    "                crate::backend::app_server::find_cli_binary(\"claude\", None)\n"
+                    "                    .map(|p| p.to_string_lossy().to_string())\n"
+                    "                    .unwrap_or_else(|| \"claude\".to_string())\n"
+                    "            }\n"
+                    "        } else {\n"
+                    "            crate::backend::app_server::find_cli_binary(\"claude\", None)\n"
+                    "                .map(|p| p.to_string_lossy().to_string())\n"
+                    "                .unwrap_or_else(|| \"claude\".to_string())\n"
+                    "        };\n",
+                ),
+            ],
+        )
         PY
       - npm ci
       - npm exec -- tauri build --no-bundle
