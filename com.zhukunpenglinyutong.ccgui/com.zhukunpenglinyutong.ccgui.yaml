@@ -63,6 +63,25 @@ modules:
                 "  }, [checkForUpdates, onDebug]);\n",
                 "  }, [checkForUpdates, effectiveEnabled, onDebug]);\n",
             ),
+            (
+                "      if (\n"
+                "        message.startsWith(\"CLI_NOT_FOUND:\") ||\n"
+                "        message.includes(\"No such file or directory\") ||\n"
+                "        message.includes(\"Failed to execute claude\") ||\n"
+                "        message.includes(\"Failed to execute codex\")\n"
+                "      ) {\n"
+                "        return `${t(\"errors.cliNotFound\")}\\n\\n${t(\"errors.cliNotFoundHint\")}`;\n"
+                "      }\n",
+                "      if (message.startsWith(\"CLI_NOT_FOUND:\")) {\n"
+                "        return `${t(\"errors.cliNotFound\")}\\n\\n${t(\"errors.cliNotFoundHint\")}\\n\\n${message}`;\n"
+                "      }\n"
+                "      if (\n"
+                "        message.includes(\"Failed to execute claude\") ||\n"
+                "        message.includes(\"Failed to execute codex\")\n"
+                "      ) {\n"
+                "        return `${t(\"errors.cliNotFound\")}\\n\\n${t(\"errors.cliNotFoundHint\")}\\n\\n${message}`;\n"
+                "      }\n",
+            ),
         ]
 
         for old, new in replacements:
